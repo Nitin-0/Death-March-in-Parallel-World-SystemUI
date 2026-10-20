@@ -1,0 +1,591 @@
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Death March to the Parallel World Rhapsody - System HUD (Satou)</title>
+<link rel="stylesheet" href="style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Noto+Sans+JP:wght@400;500;700;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+
+</head>
+<body>
+
+  <!-- BACKGROUND PURPLE MIASMA CLOUDS (Exact visual match to Episode 1 scene) -->
+  <div class="world-bg">
+    <canvas id="miasmaCanvas" class="clouds-canvas"></canvas>
+  </div>
+  <div class="vignette"></div>
+  <div id="meteorFlash" class="meteor-flash"></div>
+
+  <!-- SYSTEM LOG NOTIFICATION TOAST -->
+  <div id="sysToast" class="system-toast">System Message</div>
+
+  <!-- ==================== HUD LAYER ==================== -->
+  <div class="hud-layer">
+
+    <!-- TOP-RIGHT HEXAGONAL MINIMAP -->
+    <div class="minimap-wrapper interactive">
+      <div class="minimap-hex-outer" id="minimapDragArea" title="Drag to pan map / Click to drop pin">
+        <div class="minimap-hex-inner">
+          <div class="minimap-canvas-container" id="minimapContent">
+            <!-- Detailed SVG parchment terrain map matching top-right screenshot -->
+            <svg viewBox="0 0 220 190" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+              <defs>
+                <radialGradient id="mapBaseGrad" cx="50%" cy="50%" r="60%">
+                  <stop offset="0%" stop-color="#d2be6e"/>
+                  <stop offset="100%" stop-color="#b79f4c"/>
+                </radialGradient>
+              </defs>
+              <!-- Base Desert/Wasteland tone -->
+              <rect width="220" height="190" fill="url(#mapBaseGrad)"/>
+
+              <!-- Top Mesa / High ground contours -->
+              <path d="M40,-5 Q65,30 85,28 Q105,26 115,0 Z" fill="#dfd08c" stroke="#998238" stroke-width="1.5"/>
+              <path d="M52,0 Q70,20 84,18 Q96,16 103,0 Z" fill="#ebe0a7"/>
+
+              <!-- Top Right Mesa -->
+              <path d="M135,10 Q128,32 145,45 Q165,55 182,36 Q190,18 168,8 Z" fill="#dfd08c" stroke="#998238" stroke-width="1.5"/>
+              <path d="M144,18 Q140,30 151,37 Q164,43 173,31 Q178,20 163,14 Z" fill="#ebe0a7"/>
+
+              <!-- Center Canyon / Dragon's Valley Plateau (exact shape from screenshot) -->
+              <path d="M55,75 Q62,62 82,70 Q98,77 110,66 Q126,56 146,62 Q165,67 166,85 Q168,105 178,116 Q165,134 146,128 Q132,124 128,110 Q115,106 112,125 Q110,152 92,155 Q74,157 72,135 Q68,118 56,114 Q45,108 49,92 Z" 
+                    fill="#dfd08c" stroke="#967f35" stroke-width="2"/>
+              <path d="M64,82 Q70,72 85,78 Q100,84 112,74 Q126,65 142,70 Q156,75 157,89 Q158,104 165,113 Q155,123 142,118 Q130,113 124,100 Q108,96 104,116 Q102,140 90,142 Q79,143 78,126 Q75,111 63,106 Q55,102 58,90 Z" 
+                    fill="#ece1ab" stroke="#b59f52" stroke-width="1"/>
+
+              <!-- Map Coordinate Grid Lines -->
+              <g stroke="rgba(95, 78, 28, 0.32)" stroke-width="0.8">
+                <line x1="0" y1="48" x2="220" y2="48"/>
+                <line x1="0" y1="95" x2="220" y2="95"/>
+                <line x1="0" y1="142" x2="220" y2="142"/>
+                <line x1="55" y1="0" x2="55" y2="190"/>
+                <line x1="110" y1="0" x2="110" y2="190"/>
+                <line x1="165" y1="0" x2="165" y2="190"/>
+              </g>
+
+              <!-- Enemy / Lizardmen red dots (toggleable via radar) -->
+              <g id="mapMarkers" opacity="0.85">
+                <circle cx="95" cy="95" r="2" fill="#c93838"/>
+                <circle cx="122" cy="84" r="2" fill="#c93838"/>
+                <circle cx="136" cy="92" r="2" fill="#c93838"/>
+                <circle cx="88" cy="118" r="2" fill="#c93838"/>
+              </g>
+
+              <!-- Satou's White/Silver Player Pointer Arrow in center -->
+              <g id="playerCursor" transform="translate(110, 74) rotate(-35)">
+                <polygon points="0,-9 6,7 0,3 -6,7" fill="#f7f5eb" stroke="#574f38" stroke-width="1"/>
+              </g>
+            </svg>
+          </div>
+
+          <!-- Inner crisp hexagonal border line -->
+          <svg class="minimap-border-svg" viewBox="0 0 215 190">
+            <polygon points="53.75,4 161.25,4 211,95 161.25,186 53.75,186 4,95" 
+                     fill="none" stroke="#6c654b" stroke-width="2"/>
+            <polygon points="55.5,7 159.5,7 207,95 159.5,183 55.5,183 8,95" 
+                     fill="none" stroke="#e4e0ca" stroke-width="1.2"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Bottom-Left Small "+" Hex Button -->
+      <div class="minimap-zoom-btn" id="minimapZoomBtn" title="Toggle Map Zoom">
+        <div class="minimap-zoom-btn-inner">
+          <div class="minimap-zoom-btn-core" id="zoomSymbol">+</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== FLOATING CENTER WINDOWS ==================== -->
+    <div class="windows-area">
+
+      <!-- MAIN CHARACTER / SYSTEM WINDOW -->
+      <div class="sys-window" id="mainSysWindow">
+        <!-- Top Trapezoid Tab Header -->
+        <div class="win-top-tabs" id="winDragHandle">
+          <div class="win-title-trap" id="winHeaderTitle">CHARACTER</div>
+          <div class="win-close-trap" id="winCloseBtn" title="Close Window">×</div>
+        </div>
+
+        <div class="win-frame">
+          <!-- Sub-Tabs (STATUS / PARAMETER or Contextual Tabs) -->
+          <div class="win-subnav" id="winSubnav">
+            <div class="subnav-tab active" data-subtab="status">STATUS</div>
+            <div class="subnav-tab" data-subtab="parameter">PARAMETER</div>
+          </div>
+
+          <!-- TAB CONTENT 1: STATUS (Exact 1:1 from Screenshot) -->
+          <div id="tabContentStatus">
+            <!-- Upper Profile Block -->
+            <div class="status-upper">
+              <div class="profile-row">
+                <div class="avatar-badge">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="#d8d4c5">
+                    <circle cx="12" cy="8" r="4"/>
+                    <path d="M4,21 C4,16.5 7.5,14 12,14 C16.5,14 20,16.5 20,21"/>
+                  </svg>
+                </div>
+                <div class="char-name-block">
+                  <span class="char-name">Satou</span>
+                  <span class="char-lv" id="charLvText">Lv 1</span>
+                </div>
+              </div>
+
+              <div class="info-grid">
+                <div class="info-label">EXP</div>
+                <div class="exp-bar-box" title="Click to test EXP">
+                  <div class="exp-bar-fill" id="expBarFill" style="width: 0%;"></div>
+                </div>
+
+                <div class="info-label">TITLE</div>
+                <div class="title-select-box" id="titleDropdownTrigger">
+                  <span id="currentTitleText">Title: None</span>
+                  <span class="dropdown-arrow"></span>
+                  <!-- Title Dropdown List -->
+                  <div class="title-dropdown-menu" id="titleDropdownMenu">
+                    <div class="title-option selected" data-title="Title: None">Title: None</div>
+                    <div class="title-option" data-title="Title: God Slayer">Title: God Slayer</div>
+                    <div class="title-option" data-title="Title: Dragon Slayer">Title: Dragon Slayer</div>
+                    <div class="title-option" data-title="Title: Natural Disaster">Title: Natural Disaster</div>
+                    <div class="title-option" data-title="Title: Hero">Title: Hero</div>
+                  </div>
+                </div>
+
+                <div class="info-label">RACE</div>
+                <div class="race-value">HUMAN</div>
+              </div>
+            </div>
+
+            <!-- Lower Stats & Vitals Block -->
+            <div class="status-lower">
+              <!-- Left Column: ABILITY / POINTS / BONUS -->
+              <div>
+                <div class="ability-col-headers">
+                  <span>ABILITY</span>
+                  <span>POINTS</span>
+                  <span>BONUS</span>
+                </div>
+                <div class="ability-list" id="abilityList">
+                  <div class="ability-row">
+                    <span class="stat-abbr">STR</span>
+                    <div class="stat-point-box" data-stat="str" title="Click to allocate points">9</div>
+                    <span class="stat-bonus">+0</span>
+                  </div>
+                  <div class="ability-row">
+                    <span class="stat-abbr">VIT</span>
+                    <div class="stat-point-box" data-stat="vit" title="Click to allocate points">7</div>
+                    <span class="stat-bonus">+0</span>
+                  </div>
+                  <div class="ability-row">
+                    <span class="stat-abbr">DEX</span>
+                    <div class="stat-point-box" data-stat="dex" title="Click to allocate points">3</div>
+                    <span class="stat-bonus">+0</span>
+                  </div>
+                  <div class="ability-row">
+                    <span class="stat-abbr">AGI</span>
+                    <div class="stat-point-box" data-stat="agi" title="Click to allocate points">5</div>
+                    <span class="stat-bonus">+0</span>
+                  </div>
+                  <div class="ability-row">
+                    <span class="stat-abbr">INT</span>
+                    <div class="stat-point-box" data-stat="int" title="Click to allocate points">7</div>
+                    <span class="stat-bonus">+0</span>
+                  </div>
+                  <div class="ability-row">
+                    <span class="stat-abbr">MND</span>
+                    <div class="stat-point-box" data-stat="mnd" title="Click to allocate points">3</div>
+                    <span class="stat-bonus">+0</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Column: HIT POINTS / MAGIC POINTS / STAMINA / CONDITION -->
+              <div class="vitals-col">
+                <div class="vitals-group">
+                  <div class="vital-row">
+                    <span class="vital-label">HIT POINTS</span>
+                    <div class="vital-box" id="hpTextBox">10 / 10</div>
+                  </div>
+                  <div class="vital-row">
+                    <span class="vital-label">MAGIC POINTS</span>
+                    <div class="vital-box" id="mpTextBox">10 / 10</div>
+                  </div>
+                  <div class="vital-row">
+                    <span class="vital-label">STAMINA</span>
+                    <div class="vital-box" id="spTextBox">10 / 10</div>
+                  </div>
+                </div>
+
+                <div class="condition-group">
+                  <div class="condition-row">
+                    <span class="vital-label">CONDITION</span>
+                    <div class="condition-slot" id="condSlot1">-</div>
+                  </div>
+                  <div class="condition-row">
+                    <span></span>
+                    <div class="condition-slot">-</div>
+                  </div>
+                  <div class="condition-row">
+                    <span></span>
+                    <div class="condition-slot">-</div>
+                  </div>
+                  <div class="condition-row">
+                    <span></span>
+                    <div class="condition-slot">-</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB CONTENT 2: DYNAMIC SUB-PANELS (PARAMETER / SKILLS / MAGIC / LOG / STORAGE / SETTINGS) -->
+          <div id="tabContentOther" style="display: none; padding: 14px 16px;" class="status-lower">
+            <div style="grid-column: 1 / -1;" id="dynamicPanelBody"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ==========================================================
+            1:1 REPLICA OF CHARACTER -> SKILLS / SPELLS WINDOW
+            (Imported from index2.html: "CHARACTER")
+            ========================================================== -->
+      <div class="character-window-wrapper interactive" id="charWindowWrapper">
+        <!-- Top Trapezoid Tab ("CHARACTER" + angled "x" button) -->
+        <div class="window-top-hat" id="charDragHandle">
+          <div class="hat-title-tab" id="windowHatTitle">CHARACTER</div>
+          <div class="hat-close-btn" id="closeCharWindowBtn" title="Close Window">×</div>
+        </div>
+
+        <div class="character-window">
+          <div class="top-gold-rule"></div>
+
+          <!-- SKILLS / SPELLS Sub-navigation -->
+          <div class="subtabs-bar">
+            <div class="subtab-item active" data-tab="skills" id="tabSkillsBtn">SKILLS</div>
+            <div class="subtab-item" data-tab="spells" id="tabSpellsBtn">SPELLS</div>
+          </div>
+
+          <!-- 3 Filter Controls: ALL CATEGORY | ALL SKILLS | SKILL POINTS 99+ -->
+          <div class="filter-bar">
+            <!-- Category Filter -->
+            <div class="filter-select-wrap">
+              <button class="filter-btn" id="catFilterBtn">
+                <span id="catFilterLabel">ALL CATEGORY</span>
+                <span class="caret">▼</span>
+              </button>
+              <div class="dropdown-menu" id="catDropdown">
+                <div class="dropdown-option selected" data-cat="ALL"><span>ALL CATEGORIES</span></div>
+                <div class="dropdown-option" data-cat="PERCEPTION"><span>PERCEPTION</span></div>
+                <div class="dropdown-option" data-cat="LIFE"><span>LIFE / DAILY</span></div>
+                <div class="dropdown-option" data-cat="COMBAT"><span>COMBAT</span></div>
+                <div class="dropdown-option" data-cat="MAGIC"><span>MAGIC</span></div>
+                <div class="dropdown-option" data-cat="PRODUCTION"><span>PRODUCTION</span></div>
+              </div>
+            </div>
+
+            <!-- Skill State Filter -->
+            <div class="filter-select-wrap">
+              <button class="filter-btn" id="stateFilterBtn">
+                <span id="stateFilterLabel">ALL SKILLS</span>
+                <span class="caret">▼</span>
+              </button>
+              <div class="dropdown-menu" id="stateDropdown">
+                <div class="dropdown-option selected" data-state="ALL"><span>ALL SKILLS</span></div>
+                <div class="dropdown-option" data-state="MASTERY"><span>MASTERY ONLY</span></div>
+                <div class="dropdown-option" data-state="ACTIVE"><span>ACTIVE (ON)</span></div>
+                <div class="dropdown-option" data-state="INACTIVE"><span>INACTIVE (OFF)</span></div>
+              </div>
+            </div>
+
+            <!-- Skill Points Counter -->
+            <div class="filter-select-wrap">
+              <button class="filter-btn" id="spBtn" title="Click to toggle exact SP display">
+                <span>SKILL POINTS</span>
+                <span class="sp-value" id="spDisplayVal">99+</span>
+                <span class="caret">▼</span>
+              </button>
+              <div class="dropdown-menu" id="spDropdown">
+                <div class="dropdown-option" id="maxAllBtn"><span>★ MAX ALL SKILLS (99+)</span></div>
+                <div class="dropdown-option" id="resetSelectedBtn"><span>↺ RESET SELECTED TO 0/10</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top Highlighted Skill Detail Box (Default: Mental Resistance 0/10 as in screenshot) -->
+          <div class="skill-detail-card" id="skillDetailCard">
+            <div class="detail-left">
+              <div class="detail-hex-col">
+                <div class="hex-badge-lg" id="detailHexIcon">
+                  <!-- SVG injected dynamically -->
+                </div>
+                <div class="detail-level-fraction" id="detailFraction">0/10</div>
+              </div>
+              <div class="detail-title-col">
+                <div class="detail-skill-name" id="detailSkillName">Mental Resistance</div>
+                <div class="detail-skill-cat" id="detailSkillCat">CATEGORY : PERCEPTION</div>
+                <div class="toggle-switch-wrap" id="detailToggleSwitch" title="Toggle Skill Active ON/OFF">
+                  <div class="toggle-knob" id="detailToggleKnob">ON</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="detail-right">
+              <div class="upgrade-top-row">
+                <div class="upgrade-note" id="upgradeNoteText">
+                  1 point required<br>for upgrade.
+                </div>
+                <button class="upgrade-btn" id="upgradeSkillBtn">UPGRADE</button>
+              </div>
+              <!-- 10-Pip Interactive Level Bar -->
+              <div class="level-pips-bar" id="detailPipsBar">
+                <!-- 10 cells generated by JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Scrollable List of Skills -->
+          <div class="skills-scroll-list" id="skillsListContainer">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ==================== BOTTOM HEXAGONAL NAVIGATION DOCK ==================== -->
+    <div class="bottom-hud-dock interactive">
+      <div class="dock-svg-wrapper">
+
+        <!-- Title Selector Bar right above HP/MP/SP Center Gauges -->
+        <div class="dock-title-bar" id="dockTitleBar" title="Click to change title">
+          <span id="dockTitleText">Title: None</span>
+          <span class="dock-title-arrow"></span>
+        </div>
+
+        <!-- Center HP / MP / Stamina Slanted Bars -->
+        <div class="dock-gauges" id="dockGaugesBtn" title="Click to toggle Lv 1 ⇔ Lv 310 (Meteor Shower)">
+          <svg viewBox="0 0 176 56" width="100%" height="100%">
+            <!-- Outer dark recessed frame -->
+            <polygon points="10,2 166,2 174,17 156,54 20,54 2,17" fill="#322d31" stroke="#b8b292" stroke-width="1.5"/>
+
+            <!-- HP Bar (Red, Top) -->
+            <polygon points="14,6 162,6 167,16 9,16" fill="#231f22" stroke="#857f6a" stroke-width="0.8"/>
+            <polygon id="hudHpPoly" points="14.5,6.8 161.5,6.8 166,15.2 10,15.2" fill="#a8283b"/>
+            <polygon points="14.5,6.8 161.5,6.8 163,10 13,10" fill="rgba(255,255,255,0.18)"/>
+
+            <!-- MP Bar (Blue, Middle) -->
+            <polygon points="9,21 167,21 161,34 15,34" fill="#231f22" stroke="#857f6a" stroke-width="0.8"/>
+            <polygon id="hudMpPoly" points="10,21.8 166,21.8 160.2,33.2 15.8,33.2" fill="#286ea8"/>
+            <polygon points="10,21.8 166,21.8 164,26 12,26" fill="rgba(255,255,255,0.18)"/>
+
+            <!-- Stamina Bar (Green, Bottom) -->
+            <polygon points="16,39 160,39 154,51 22,51" fill="#231f22" stroke="#857f6a" stroke-width="0.8"/>
+            <polygon id="hudSpPoly" points="16.8,39.8 159.2,39.8 153.5,50.2 22.5,50.2" fill="#2ea85d"/>
+            <polygon points="16.8,39.8 159.2,39.8 157,44 19,44" fill="rgba(255,255,255,0.18)"/>
+          </svg>
+        </div>
+
+        <!-- Master SVG for Left & Right Hexagonal Honeycomb Clusters (Exact match to screenshot) -->
+        <svg viewBox="0 0 680 112" width="680" height="112">
+          <defs>
+            <!-- Radial gradients for special slots -->
+            <radialGradient id="greenRadarGrad" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#6ef26b"/>
+              <stop offset="65%" stop-color="#28b835"/>
+              <stop offset="100%" stop-color="#197321"/>
+            </radialGradient>
+            <radialGradient id="blueAlertGrad" cx="50%" cy="50%" r="55%">
+              <stop offset="0%" stop-color="#8b9cf2"/>
+              <stop offset="100%" stop-color="#5a65b8"/>
+            </radialGradient>
+            <linearGradient id="beigePlateGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#dfdbc5"/>
+              <stop offset="100%" stop-color="#bfba9b"/>
+            </linearGradient>
+          </defs>
+
+          <!-- ==================== LEFT WING BACKPLATE ==================== -->
+          <polygon points="14,56 54,56 76,20 112,20 124,40 160,40 172,20 208,20 220,40 250,40 264,62 246,98 36,98"
+                   fill="url(#beigePlateGrad)" stroke="#8c866b" stroke-width="1.5"/>
+          <!-- Left Wing Corner Accent Triangles -->
+          <polygon points="20,60 32,60 26,70" fill="#635e49"/>
+          <polygon points="247,43 255,56 244,53" fill="#635e49"/>
+
+          <!-- ==================== RIGHT WING BACKPLATE ==================== -->
+          <polygon points="666,56 626,56 604,20 568,20 556,40 520,40 508,20 472,20 460,40 430,40 416,62 434,98 644,98"
+                   fill="url(#beigePlateGrad)" stroke="#8c866b" stroke-width="1.5"/>
+          <!-- Right Wing Corner Accent Triangles -->
+          <polygon points="660,60 648,60 654,70" fill="#635e49"/>
+          <polygon points="433,43 425,56 436,53" fill="#635e49"/>
+
+          <!-- Center Bridge connecting wings -->
+          <path d="M250,42 L430,42 L442,98 L238,98 Z" fill="url(#beigePlateGrad)" stroke="#8c866b" stroke-width="1.5"/>
+
+          <!-- ==================== LEFT HEXAGON SLOTS (6 Hexes) ==================== -->
+          <!-- Helper function coordinates: pointy-left/right flat-top hexes (w=44, h=38) -->
+          
+          <!-- L1: Bottom-Far-Left Empty Slot (cx=58, cy=76) -->
+          <g class="hex-slot" data-action="meteor" transform="translate(58, 76)">
+            <title>All-Map Strategic Magic: Meteor Shower ×3</title>
+            <polygon points="-22,0 -11,-19 11,-19 22,0 11,19 -11,19" fill="#5d5852" stroke="#857f6c" stroke-width="2"/>
+            <polygon points="-18,0 -9,-15.5 9,-15.5 18,0 9,15.5 -9,15.5" fill="#4f4a46" stroke="#b0aa92" stroke-width="0.8"/>
+          </g>
+
+          <!-- L2: Top-Left Empty Slot (cx=94, cy=42) -->
+          <g class="hex-slot" data-action="slot2" transform="translate(94, 42)">
+            <title>Shortcut Slot 2 (Unassigned)</title>
+            <polygon points="-22,0 -11,-19 11,-19 22,0 11,19 -11,19" fill="#5d5852" stroke="#857f6c" stroke-width="2"/>
+            <polygon points="-18,0 -9,-15.5 9,-15.5 18,0 9,15.5 -9,15.5" fill="#4f4a46" stroke="#b0aa92" stroke-width="0.8"/>
+          </g>
+
+          <!-- L3: Bottom-Mid-Left Empty Slot (cx=130, cy=76) -->
+          <g class="hex-slot" data-action="slot3" transform="translate(130, 76)">
+            <title>Shortcut Slot 3 (Unassigned)</title>
+            <polygon points="-22,0 -11,-19 11,-19 22,0 11,19 -11,19" fill="#5d5852" stroke="#857f6c" stroke-width="2"/>
+            <polygon points="-18,0 -9,-15.5 9,-15.5 18,0 9,15.5 -9,15.5" fill="#4f4a46" stroke="#b0aa92" stroke-width="0.8"/>
+          </g>
+
+          <!-- L4: Top-Mid-Left GREEN RADAR HEX (cx=156, cy=52) -->
+          <g class="hex-slot" data-action="radar" transform="translate(156, 52)">
+            <title>Radar / Detection Display Toggle</title>
+            <polygon points="-22,0 -11,-19 11,-19 22,0 11,19 -11,19" fill="#4d7a47" stroke="#857f6c" stroke-width="2"/>
+            <polygon points="-18.5,0 -9.2,-16 9.2,-16 18.5,0 9.2,16 -9.2,16" fill="url(#greenRadarGrad)" stroke="#bdf7b5" stroke-width="1"/>
+            <!-- Concentric Radar Circles -->
+            <circle cx="0" cy="0" r="11" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1"/>
+            <circle cx="0" cy="0" r="6" fill="none" stroke="rgba(255,255,255,0.65)" stroke-width="1"/>
+            <circle cx="0" cy="0" r="2" fill="#ffffff"/>
+          </g>
+
+          <!-- L5: Bottom-Right-Left BLUE/PURPLE ALERT HEX (cx=184, cy=76) -->
+          <g class="hex-slot pulse-hex" data-action="alert1" transform="translate(184, 76)">
+            <title>New Skill Acquired Notification (1)</title>
+            <polygon points="-22,0 -11,-19 11,-19 22,0 11,19 -11,19" fill="#4d5278" stroke="#857f6c" stroke-width="2"/>
+            <polygon points="-18.5,0 -9.2,-16 9.2,-16 18.5,0 9.2,16 -9.2,16" fill="url(#blueAlertGrad)" stroke="#c7cff7" stroke-width="1"/>
+            <!-- Diagonal Exclamation Mark + Orange Corner Dot -->
+            <g transform="rotate(28)">
+              <rect x="-2" y="-10" width="4" height="11" rx="1.5" fill="#ffffff"/>
+              <circle cx="0" cy="5.5" r="2.2" fill="#ffffff"/>
+            </g>
+            <circle cx="7" cy="9" r="4" fill="#d99b26" stroke="#fff" stroke-width="0.7"/>
+          </g>
+
+          <!-- L6: Top-Inner-Left BLUE/PURPLE ALERT HEX (cx=194, cy=42) -->
+          <g class="hex-slot pulse-hex" data-action="alert2" transform="translate(194, 42)">
+            <title>New Skill Acquired Notification (2)</title>
+            <polygon points="-22,0 -11,-19 11,-19 22,0 11,19 -11,19" fill="#4d5278" stroke="#857f6c" stroke-width="2"/>
+            <polygon points="-18.5,0 -9.2,-16 9.2,-16 18.5,0 9.2,16 -9.2,16" fill="url(#blueAlertGrad)" stroke="#c7cff7" stroke-width="1"/>
+            <g transform="rotate(28)">
+              <rect x="-2" y="-10" width="4" height="11" rx="1.5" fill="#ffffff"/>
+              <circle cx="0" cy="5.5" r="2.2" fill="#ffffff"/>
+            </g>
+            <circle cx="7" cy="9" r="4" fill="#d99b26" stroke="#fff" stroke-width="0.7"/>
+          </g>
+
+          <!-- L7: Bottom-Inner-Left BLUE/PURPLE ALERT HEX (cx=230, cy=76) -->
+          <g class="hex-slot pulse-hex" data-action="alert3" transform="translate(230, 76)">
+            <title>New Title Acquired Notification (3)</title>
+            <polygon points="-22,0 -11,-19 11,-19 22,0 11,19 -11,19" fill="#4d5278" stroke="#857f6c" stroke-width="2"/>
+            <polygon points="-18.5,0 -9.2,-16 9.2,-16 18.5,0 9.2,16 -9.2,16" fill="url(#blueAlertGrad)" stroke="#c7cff7" stroke-width="1"/>
+            <g transform="rotate(28)">
+              <rect x="-2" y="-10" width="4" height="11" rx="1.5" fill="#ffffff"/>
+              <circle cx="0" cy="5.5" r="2.2" fill="#ffffff"/>
+            </g>
+            <circle cx="7" cy="9" r="4" fill="#d99b26" stroke="#fff" stroke-width="0.7"/>
+          </g>
+
+          <!-- ==================== RIGHT HEXAGON MENU SLOTS (7 Menu Icons) ==================== -->
+
+          <!-- R1: Bottom-Inner-Right CHARACTER STATUS (Active Highlighted) (cx=450, cy=76) -->
+          <g class="hex-slot" id="navHexStatus" data-menu="status" transform="translate(450, 76)">
+            <title>Character (Status)</title>
+            <polygon class="hex-outer" points="-22,0 -11,-19 11,-19 22,0 11,19 -11,19" fill="#9e987b" stroke="#6e6953" stroke-width="2"/>
+            <polygon class="hex-inner" points="-18,0 -9,-15.5 9,-15.5 18,0 9,15.5 -9,15.5" fill="#7d7860" stroke="#e8e4ce" stroke-width="1.2"/>
+            <!-- Human Silhouette Icon -->
+            <circle cx="0" cy="-6" r="3.6" fill="#ffffff"/>
+            <path d="M-5.5,10 L-4,0 C-4,-1.5 4,-1.5 4,0 L5.5,10 Z" fill="#ffffff"/>
+          </g>
+
+          <!-- R2: Top-Inner-Right SKILLS / HAND ICON (cx=482, cy=42) -->
+          <g class="hex-slot" id="navHexSkills" data-menu="skills" transform="translate(482, 42)">
+            <title>Skill List</title>
+            <polygon class="hex-outer" points="-22,0 -11,-19 11,-19 22,0 11,19 -11,19" fill="#bab496" stroke="#78725b" stroke-width="2"/>
+            <polygon class="hex-inner" points="-18,0 -9,-15.5 9,-15.5 18,0 9,15.5 -9,15.5" fill="#d6d1b8" stroke="#857f66" stroke-width="1"/>
+            <!-- Open Hand Icon -->
+            <g fill="#4a4637" transform="scale(0.85) translate(-12, -12)">
+              <path d="M12,2 C12.6,2 13,2.4 13,3 L13,10 L14.5,10 L14.5,3.5 C14.5,2.9 15,2.5 15.5,2.5 C16.1,2.5 16.5,2.9 16.5,3.5 L16.5,10.5 L18,10.5 L18,5.5 C18,4.9 18.4,4.5 19,4.5 C19.6,4.5 20,4.9 20,5.5 L20,14 C20,18.4 16.4,22 12,22 C7.6,22 4,18.4 4,14 L4,9 C4,8.4 4.4,8 5,8 C5.6,8 6,8.4 6,9 L6,13 L7.5,13 L7.5,4 C7.5,3.4 7.9,3 8.5,3 C9.1,3 9.5,3.4 9.5,4 L9.5,10 L11,10 L11,3 C11,2.4 11.4,2 12,2 Z"/>
+            </g>
+          </g>
+
+          <!-- R3: Bottom-Mid-Right EQUIPMENT / BAG ICON (cx=508, cy=76) -->
+          <g class="hex-slot" id="navHexBag" data-menu="storage" transform="translate(508, 76)">
+            <title>Storage (Inventory / Equipment)</title>
+            <polygon class="hex-outer" points="-22,0 -11,-19 11,-19 22,0 11,19 -11,19" fill="#bab496" stroke="#78725b" stroke-width="2"/>
+            <polygon class="hex-inner" points="-18,0 -9,-15.5 9,-15.5 18,0 9,15.5 -9,15.5" fill="#d6d1b8" stroke="#857f66" stroke-width="1"/>
+            <!-- Pouch / Winged Boot / Bag Icon -->
+            <path d="M-6,-5 C-6,-8 4,-8 4,-5 L7,4 C8,6 6,8 3,8 L-7,8 C-9,8 -10,5 -8,3 Z" fill="#4a4637"/>
+            <path d="M-8,-2 L8,-2" stroke="#d6d1b8" stroke-width="1.4"/>
+          </g>
+
+          <!-- R4: Top-Mid-Right MAGIC / STAR EMBLEM ICON (cx=536, cy=52) -->
+          <g class="hex-slot" id="navHexMagic" data-menu="magic" transform="translate(536, 52)">
+            <title>Magic Spells List</title>
+            <polygon class="hex-outer" points="-22,0 -11,-19 11,-19 22,0 11,19 -11,19" fill="#bab496" stroke="#78725b" stroke-width="2"/>
+            <polygon class="hex-inner" points="-18,0 -9,-15.5 9,-15.5 18,0 9,15.5 -9,15.5" fill="#d6d1b8" stroke="#857f66" stroke-width="1"/>
+            <!-- Magic Circle / Star Emblem -->
+            <circle cx="0" cy="0" r="7.5" fill="none" stroke="#4a4637" stroke-width="1.8"/>
+            <polygon points="0,-6 1.8,-1.8 6,-1.8 2.6,1 4,5.5 0,2.8 -4,5.5 -2.6,1 -6,-1.8 -1.8,-1.8" fill="#4a4637"/>
+          </g>
+
+          <!-- R5: Bottom-Outer-Right JOURNAL / BOOK ICON (cx=564, cy=76) -->
+          <g class="hex-slot" id="navHexBook" data-menu="journal" transform="translate(564, 76)">
+            <title>Quests & World Lore</title>
+            <polygon class="hex-outer" points="-22,0 -11,-19 11,-19 22,0 11,19 -11,19" fill="#bab496" stroke="#78725b" stroke-width="2"/>
+            <polygon class="hex-inner" points="-18,0 -9,-15.5 9,-15.5 18,0 9,15.5 -9,15.5" fill="#d6d1b8" stroke="#857f66" stroke-width="1"/>
+            <!-- Book Icon -->
+            <rect x="-6" y="-7" width="12" height="14" rx="1" fill="none" stroke="#4a4637" stroke-width="1.8"/>
+            <line x1="-2" y1="-7" x2="-2" y2="7" stroke="#4a4637" stroke-width="1.5"/>
+            <line x1="1" y1="-3" x2="4" y2="-3" stroke="#4a4637" stroke-width="1.5"/>
+            <line x1="1" y1="1" x2="4" y2="1" stroke="#4a4637" stroke-width="1.5"/>
+          </g>
+
+          <!-- R6: Top-Outer-Right LOG / SCROLL ICON (cx=590, cy=42) -->
+          <g class="hex-slot" id="navHexLog" data-menu="log" transform="translate(590, 42)">
+            <title>Information & System Log</title>
+            <polygon class="hex-outer" points="-22,0 -11,-19 11,-19 22,0 11,19 -11,19" fill="#8d99a6" stroke="#78725b" stroke-width="2"/>
+            <polygon class="hex-inner" points="-18,0 -9,-15.5 9,-15.5 18,0 9,15.5 -9,15.5" fill="#a2b0bf" stroke="#d0d9e3" stroke-width="1"/>
+            <!-- Scroll / Document Icon -->
+            <rect x="-6" y="-7" width="12" height="14" rx="1.5" fill="none" stroke="#3a434d" stroke-width="1.6"/>
+            <line x1="-3.5" y1="-3" x2="3.5" y2="-3" stroke="#3a434d" stroke-width="1.5"/>
+            <line x1="-3.5" y1="0.5" x2="3.5" y2="0.5" stroke="#3a434d" stroke-width="1.5"/>
+            <line x1="-3.5" y1="4" x2="1.5" y2="4" stroke="#3a434d" stroke-width="1.5"/>
+          </g>
+
+          <!-- R7: Bottom-Far-Right SETTINGS / GEAR ICON (cx=622, cy=76) -->
+          <g class="hex-slot" id="navHexSettings" data-menu="settings" transform="translate(622, 76)">
+            <title>System Settings (Menu / Display)</title>
+            <polygon class="hex-outer" points="-22,0 -11,-19 11,-19 22,0 11,19 -11,19" fill="#8d99a6" stroke="#78725b" stroke-width="2"/>
+            <polygon class="hex-inner" points="-18,0 -9,-15.5 9,-15.5 18,0 9,15.5 -9,15.5" fill="#a2b0bf" stroke="#d0d9e3" stroke-width="1"/>
+            <!-- Gear / Cog Icon -->
+            <circle cx="0" cy="0" r="4.2" fill="none" stroke="#eef2f7" stroke-width="2"/>
+            <g stroke="#eef2f7" stroke-width="2.2" stroke-linecap="round">
+              <line x1="0" y1="-8" x2="0" y2="-5.5"/>
+              <line x1="0" y1="5.5" x2="0" y2="8"/>
+              <line x1="-8" y1="0" x2="-5.5" y2="0"/>
+              <line x1="5.5" y1="0" x2="8" y2="0"/>
+              <line x1="-5.6" y1="-5.6" x2="-3.9" y2="-3.9"/>
+              <line x1="3.9" y1="3.9" x2="5.6" y2="5.6"/>
+              <line x1="5.6" y1="-5.6" x2="3.9" y2="-3.9"/>
+              <line x1="-3.9" y1="3.9" x2="-5.6" y2="5.6"/>
+            </g>
+          </g>
+        </svg>
+
+      </div>
+    </div>
+
+  </div>
+<script src="script.js"></script>
+</body>
+</html> 

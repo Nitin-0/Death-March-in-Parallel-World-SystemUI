@@ -1,0 +1,1436 @@
+:root {
+    --beige-light: #e2dfc9;
+    --beige-mid: #cbc6a6;
+    --beige-dark: #9c9675;
+    --gold-border: #b8b18c;
+    --panel-bg-top: rgba(53, 44, 52, 0.92);
+    --panel-bg-bottom: rgba(38, 33, 38, 0.95);
+    --slot-bg: #464245;
+    --slot-border: #787365;
+    --text-light: #ece9dc;
+    --text-dim: #aca798;
+    --hp-color: #a62639;
+    --mp-color: #266ca6;
+    --sp-color: #2da65c;
+}
+
+* {
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
+    margin: 0;
+    padding: 0;
+}
+
+body,
+html {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Noto Sans JP', sans-serif;
+    background-color: #140814;
+    color: var(--text-light);
+}
+
+/* Animated Miasma / Cloud Background matching the screenshot */
+.world-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background:
+        radial-gradient(ellipse at 50% 0%, #160918 0%, #240d26 42%, transparent 70%),
+        linear-gradient(180deg, #1b0a1c 0%, #2b102c 43%, #571d4d 48%, #47163f 65%, #240b21 100%);
+    overflow: hidden;
+}
+
+/* Horizon fog layers */
+.clouds-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.92;
+}
+
+.vignette {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    background: radial-gradient(circle at 50% 50%, transparent 55%, rgba(10, 4, 12, 0.65) 100%);
+}
+
+/* ==================== HUD CONTAINER ==================== */
+.hud-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.interactive {
+    pointer-events: auto;
+}
+
+/* ==================== TOP-RIGHT HEXAGONAL MINIMAP ==================== */
+.minimap-wrapper {
+    position: fixed;
+    top: 22px;
+    right: 36px;
+    width: 215px;
+    height: 190px;
+    z-index: 20;
+    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.75));
+}
+
+.minimap-hex-outer {
+    width: 100%;
+    height: 100%;
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+    background: linear-gradient(135deg, #e7e3ce 0%, #b5ae89 100%);
+    padding: 4px;
+    position: relative;
+    cursor: grab;
+}
+
+.minimap-hex-outer:active {
+    cursor: grabbing;
+}
+
+.minimap-hex-inner {
+    width: 100%;
+    height: 100%;
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+    background: #bfa958;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Inner gold double border line */
+.minimap-border-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.minimap-canvas-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-origin: center center;
+    transition: transform 0.2s ease-out;
+}
+
+/* Plus / Zoom Hexagon Button on bottom-left of Minimap */
+.minimap-zoom-btn {
+    position: absolute;
+    bottom: 20px;
+    left: 4px;
+    width: 48px;
+    height: 42px;
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+    background: #dedbc7;
+    padding: 3px;
+    cursor: pointer;
+    z-index: 25;
+    transition: transform 0.12s ease, filter 0.15s;
+}
+
+.minimap-zoom-btn:hover {
+    filter: brightness(1.08);
+    transform: scale(1.06);
+}
+
+.minimap-zoom-btn:active {
+    transform: scale(0.96);
+}
+
+.minimap-zoom-btn-inner {
+    width: 100%;
+    height: 100%;
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+    background: #8b866d;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.minimap-zoom-btn-core {
+    width: 100%;
+    height: 100%;
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+    background: #d5d1bc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #464336;
+    font-weight: 700;
+    font-size: 19px;
+    line-height: 1;
+}
+
+/* ==================== CENTER FLOATING WINDOWS ==================== */
+.windows-area {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 15;
+}
+
+.sys-window {
+    width: 296px;
+    position: absolute;
+    top: calc(50% - 210px);
+    left: calc(50% - 428px);
+    filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.78));
+    pointer-events: auto;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    z-index: 20;
+}
+
+.sys-window.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(10px) scale(0.98);
+}
+
+/* Top Trapezoid Tab Header ("CHARACTER" + "×") */
+.win-top-tabs {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    margin-bottom: -1px;
+    position: relative;
+    z-index: 3;
+    cursor: move;
+}
+
+.win-title-trap {
+    height: 22px;
+    min-width: 112px;
+    padding: 0 18px;
+    background: linear-gradient(180deg, #dcd8c0 0%, #c4be9d 100%);
+    clip-path: polygon(11% 0%, 89% 0%, 100% 100%, 0% 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9.5px;
+    font-weight: 700;
+    color: #3f3b2e;
+    letter-spacing: 0.5px;
+    border-top: 1px solid #f2efe0;
+}
+
+/* Inverted tiny triangle close button right next to trapezoid */
+.win-close-trap {
+    width: 22px;
+    height: 20px;
+    margin-left: -9px;
+    margin-bottom: 2px;
+    background: linear-gradient(180deg, #d7d2b9 0%, #b8b291 100%);
+    clip-path: polygon(0% 0%, 100% 0%, 55% 100%, 45% 100%);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 2px;
+    font-size: 9px;
+    font-weight: 700;
+    color: #3f3b2e;
+    cursor: pointer;
+    transition: filter 0.15s;
+}
+
+.win-close-trap:hover {
+    filter: brightness(1.15);
+    color: #a62639;
+}
+
+/* Window Body Frame */
+.win-frame {
+    border-top: 2px solid #dcd8c2;
+    border-bottom: 3px solid #cbc5a4;
+    background: var(--panel-bg-top);
+    box-shadow: inset 0 0 0 1px rgba(220, 216, 194, 0.16);
+}
+
+/* Sub-navigation bar (STATUS | PARAMETER) */
+.win-subnav {
+    height: 24px;
+    background: #c7c19e;
+    border-top: 2px solid #352f34;
+    display: flex;
+    align-items: stretch;
+    padding: 0 16px;
+    position: relative;
+}
+
+.subnav-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cinzel', serif;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    color: #494537;
+    cursor: pointer;
+    position: relative;
+    z-index: 2;
+    transition: color 0.15s;
+}
+
+.subnav-tab.active {
+    color: #e6e2ce;
+}
+
+/* Dark trapezoid highlight for active sub-tab */
+.subnav-tab.active::before {
+    content: '';
+    position: absolute;
+    inset: -1px 4px 3px 4px;
+    background: #352f34;
+    clip-path: polygon(0% 0%, 100% 0%, 88% 100%, 12% 100%);
+    z-index: -1;
+}
+
+/* Upper Profile Section inside Status Window */
+.status-upper {
+    padding: 14px 20px 14px;
+    background: linear-gradient(180deg, rgba(58, 46, 56, 0.92) 0%, rgba(47, 38, 46, 0.94) 100%);
+    border-bottom: 3px solid #231d22;
+}
+
+.profile-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 10px;
+}
+
+.avatar-badge {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #6f6a58;
+    border: 1.5px solid #aba489;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.char-name-block {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+}
+
+.char-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #f0ede1;
+    letter-spacing: 0.5px;
+}
+
+.char-lv {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: #d6d1be;
+    letter-spacing: 0.4px;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: 32px 148px;
+    row-gap: 8px;
+    align-items: center;
+    font-size: 9.5px;
+}
+
+.info-label {
+    color: #dad5c2;
+    font-weight: 700;
+    font-size: 8.5px;
+    letter-spacing: 0.3px;
+}
+
+.exp-bar-box {
+    height: 10px;
+    background: #3d393c;
+    border: 1px solid #8e8976;
+    padding: 1px;
+    position: relative;
+}
+
+.exp-bar-fill {
+    height: 100%;
+    width: 18%;
+    background: linear-gradient(90deg, #b59e45, #dfd07c);
+    transition: width 0.3s ease;
+}
+
+.title-select-box {
+    height: 19px;
+    background: #4d484b;
+    border: 1px solid #918c79;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 7px;
+    font-size: 9px;
+    color: #ece8da;
+    cursor: pointer;
+    position: relative;
+}
+
+.title-select-box:hover {
+    border-color: #c8c2a6;
+    background: #575255;
+}
+
+.dropdown-arrow {
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid #dcd7c4;
+}
+
+.race-value {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: #e6e2d3;
+    letter-spacing: 0.6px;
+    padding-left: 2px;
+}
+
+/* Lower Ability & Vital Section inside Status Window */
+.status-lower {
+    padding: 12px 16px 16px;
+    background: linear-gradient(180deg, rgba(40, 34, 39, 0.96) 0%, rgba(33, 29, 33, 0.98) 100%);
+    display: grid;
+    grid-template-columns: 106px 1fr;
+    column-gap: 14px;
+}
+
+/* Left Column: ABILITY / POINTS / BONUS */
+.ability-col-headers {
+    display: grid;
+    grid-template-columns: 32px 34px 32px;
+    font-family: 'Cinzel', serif;
+    font-size: 6.5px;
+    color: #c7c2af;
+    letter-spacing: 0.3px;
+    margin-bottom: 5px;
+    text-align: center;
+}
+
+.ability-col-headers span:first-child {
+    text-align: left;
+}
+
+.ability-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.ability-row {
+    display: grid;
+    grid-template-columns: 32px 34px 32px;
+    align-items: center;
+}
+
+.stat-abbr {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: #dbd6c4;
+    letter-spacing: 0.5px;
+}
+
+.stat-point-box {
+    height: 23px;
+    background: #484446;
+    border: 1px solid #7d7868;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: #f4f1e6;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s;
+}
+
+.stat-point-box:hover {
+    background: #595457;
+    border-color: #b5ae95;
+}
+
+.stat-bonus {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #e6e2d3;
+    text-align: center;
+}
+
+/* Right Column: HIT POINTS, MAGIC POINTS, STAMINA, CONDITION */
+.vitals-col {
+    padding-top: 11px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.vitals-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.vital-row {
+    display: grid;
+    grid-template-columns: 54px 1fr;
+    align-items: center;
+    column-gap: 4px;
+}
+
+.vital-label {
+    font-family: 'Cinzel', serif;
+    font-size: 6.5px;
+    font-weight: 700;
+    color: #d4cfc0;
+    letter-spacing: 0.1px;
+    white-space: nowrap;
+}
+
+.vital-box {
+    height: 21px;
+    background: #3a3638;
+    border: 1px solid #7a7566;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #f0ede2;
+    letter-spacing: 0.5px;
+}
+
+.condition-group {
+    margin-top: 9px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.condition-row {
+    display: grid;
+    grid-template-columns: 54px 1fr;
+    align-items: center;
+    column-gap: 4px;
+}
+
+.condition-slot {
+    height: 18px;
+    background: #3a3638;
+    border: 1px solid #7a7566;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #cfcab8;
+}
+
+/* Dropdown Menu Popup for Title Selection */
+.title-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #2f2a2e;
+    border: 1px solid #b5ae8e;
+    z-index: 40;
+    max-height: 135px;
+    overflow-y: auto;
+    display: none;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.8);
+}
+
+.title-dropdown-menu.open {
+    display: block;
+}
+
+.title-option {
+    padding: 4px 8px;
+    font-size: 9px;
+    color: #e4e0d0;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.title-option:hover,
+.title-option.selected {
+    background: #595149;
+    color: #fff;
+}
+
+/* ==================== SKILLS / MAGIC / LOG / ITEMS PANELS ==================== */
+.custom-scroll {
+    max-height: 265px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.custom-scroll::-webkit-scrollbar {
+    width: 5px;
+}
+
+.custom-scroll::-webkit-scrollbar-track {
+    background: #262125;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+    background: #9c9577;
+}
+
+.skill-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #3d373c;
+    border: 1px solid #736e60;
+    padding: 5px 8px;
+    margin-bottom: 5px;
+    font-size: 10px;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s;
+}
+
+.skill-item:hover {
+    background: #4e474d;
+    border-color: #b8b193;
+}
+
+.skill-item.unactivated {
+    opacity: 0.65;
+}
+
+.skill-lv-Controls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+}
+
+.skill-btn-mini {
+    width: 15px;
+    height: 15px;
+    background: #5c5649;
+    border: 1px solid #a8a184;
+    color: #f2efe2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.skill-btn-mini:hover {
+    background: #7d7562;
+}
+
+/* ============================================================
+     EXACT REPLICA OF SATOU'S CHARACTER / SKILLS / SPELLS WINDOW
+     (Imported from index2.html: "CHARACTER")
+     ============================================================ */
+.character-window-wrapper {
+    position: absolute;
+    top: calc(50% - 320px);
+    left: calc(50% - 112px);
+    width: 540px;
+    max-width: 96vw;
+    height: min(640px, 78vh);
+    display: flex;
+    flex-direction: column;
+    filter: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.88));
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    pointer-events: auto;
+    z-index: 22;
+}
+
+.character-window-wrapper.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(10px) scale(0.98);
+}
+
+/* Top Trapezoid Tab Header ("CHARACTER" + "x" close polygon) */
+.window-top-hat {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    position: relative;
+    height: 36px;
+    z-index: 5;
+    margin-bottom: -1px;
+    cursor: move;
+}
+
+.hat-title-tab {
+    width: 215px;
+    height: 35px;
+    background: linear-gradient(180deg, #eae6cc 0%, #cfc9a5 100%);
+    clip-path: polygon(18px 0%, calc(100% - 18px) 0%, 100% 100%, 0% 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #464438;
+    font-weight: 700;
+    font-size: 13.5px;
+    letter-spacing: 1.5px;
+    box-shadow: inset 0 2px 0 #fff9de;
+    position: relative;
+}
+
+.hat-close-btn {
+    width: 38px;
+    height: 33px;
+    background: linear-gradient(180deg, #dcd7b6 0%, #b8b28e 100%);
+    clip-path: polygon(0 0, 100% 0, 52% 100%, 44% 100%);
+    margin-left: -13px;
+    margin-bottom: 2px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 5px;
+    cursor: pointer;
+    color: #444134;
+    font-weight: 900;
+    font-size: 12px;
+    transition: filter 0.15s;
+}
+
+.hat-close-btn:hover {
+    filter: brightness(1.12);
+    color: #111;
+}
+
+/* Main Window Frame */
+.character-window {
+    flex: 1;
+    background: #17191e;
+    border: 1.5px solid #2b2d33;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Double thin gold line bar right above SKILLS/SPELLS */
+.top-gold-rule {
+    height: 5px;
+    background: #cfc9a5;
+    border-top: 1px solid #ede9cf;
+    border-bottom: 2px solid #232428;
+    width: 100%;
+}
+
+/* Sub-tabs Bar (SKILLS / SPELLS) matching inverted trapezoid active tab */
+.subtabs-bar {
+    height: 36px;
+    background: linear-gradient(180deg, #ded9b8 0%, #c8c29e 100%);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    position: relative;
+    border-bottom: 2px solid #1a1c20;
+}
+
+.subtab-item {
+    width: 138px;
+    height: 31px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: 13.5px;
+    letter-spacing: 0.8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    position: relative;
+    color: #54503e;
+}
+
+.subtab-item.active {
+    background: linear-gradient(180deg, #1d1f24 0%, #31353e 100%);
+    color: #e6e7ec;
+    clip-path: polygon(0 0, 100% 0, calc(100% - 16px) 100%, 16px 100%);
+    box-shadow: inset 0 -2px 4px rgba(255, 255, 255, 0.12);
+    z-index: 2;
+}
+
+.subtab-item:not(.active):hover {
+    color: #1f1d14;
+}
+
+/* Filter Bar Row (ALL CATEGORY | ALL SKILLS | SKILL POINTS 99+) */
+.filter-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.22fr;
+    gap: 12px;
+    padding: 13px 22px 10px;
+    background: linear-gradient(180deg, #14161a 0%, #1d2026 100%);
+    position: relative;
+    z-index: 15;
+}
+
+.filter-select-wrap {
+    position: relative;
+}
+
+.filter-btn {
+    width: 100%;
+    height: 29px;
+    background: linear-gradient(180deg, #4b4f58 0%, #343840 100%);
+    border: 1.5px solid #9fa2aa;
+    border-radius: 2px;
+    color: #e4e6eb;
+    font-family: 'Cinzel', 'Noto Sans JP', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 0 9px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 2px 4px rgba(0, 0, 0, 0.5);
+    letter-spacing: 0.4px;
+}
+
+.filter-btn:hover {
+    border-color: #d6d8de;
+    background: linear-gradient(180deg, #565b65 0%, #3c4049 100%);
+}
+
+.filter-btn .caret {
+    font-size: 9px;
+    color: #d7d9de;
+    margin-left: 6px;
+}
+
+.sp-value {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-left: auto;
+    margin-right: 4px;
+    letter-spacing: 0.5px;
+}
+
+/* Dropdown Menu */
+.dropdown-menu {
+    position: absolute;
+    top: 32px;
+    left: 0;
+    width: 100%;
+    background: #23262e;
+    border: 1.5px solid #b5b8c2;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.85);
+    z-index: 40;
+    display: none;
+    flex-direction: column;
+}
+
+.dropdown-menu.open {
+    display: flex;
+}
+
+.dropdown-option {
+    padding: 7px 10px;
+    font-size: 11.5px;
+    color: #dcdfe6;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.dropdown-option:hover,
+.dropdown-option.selected {
+    background: #484d5c;
+    color: #fff;
+}
+
+/* ============================================================
+     EXPANDED SKILL DETAIL INSPECTION CARD (Top Highlight Box)
+     ============================================================ */
+.skill-detail-card {
+    margin: 2px 10px 8px;
+    padding: 14px 18px 14px 16px;
+    background: linear-gradient(180deg, #32363f 0%, #252830 50%, #1f2229 100%);
+    border: 1.5px solid #848892;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    display: grid;
+    grid-template-columns: 1fr 1.05fr;
+    align-items: center;
+    position: relative;
+    z-index: 10;
+}
+
+.detail-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-right: 14px;
+    border-right: 1px solid rgba(155, 160, 175, 0.25);
+}
+
+.detail-hex-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.hex-badge-lg {
+    width: 62px;
+    height: 54px;
+    background: linear-gradient(135deg, #c8c3a6 0%, #8e896f 100%);
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6);
+}
+
+.hex-badge-lg::after {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    background: #aba58c;
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+    z-index: 1;
+}
+
+.hex-badge-lg svg {
+    position: relative;
+    z-index: 2;
+    width: 34px;
+    height: 34px;
+}
+
+.detail-level-fraction {
+    font-family: 'Cinzel', serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: #e2e4ec;
+    letter-spacing: 1px;
+}
+
+.detail-title-col {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.detail-skill-name {
+    font-size: 16.5px;
+    font-weight: 700;
+    color: #f1f3f8;
+    letter-spacing: 0.8px;
+}
+
+.detail-skill-cat {
+    font-size: 9.5px;
+    font-weight: 700;
+    color: #7d828d;
+    letter-spacing: 0.6px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+}
+
+/* Authentic ON / OFF Sliding Toggle Switch */
+.toggle-switch-wrap {
+    width: 118px;
+    height: 30px;
+    background: linear-gradient(180deg, #5e669e 0%, #7d86cc 100%);
+    border: 1px solid #3c4169;
+    border-radius: 3px;
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 2px;
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.55);
+    transition: background 0.2s ease;
+}
+
+.toggle-switch-wrap.off-state {
+    background: linear-gradient(180deg, #22252c 0%, #323640 100%);
+    border-color: #4f5461;
+}
+
+.toggle-knob {
+    width: 86px;
+    height: 24px;
+    background: linear-gradient(180deg, #adb5f5 0%, #7e88d6 100%);
+    border: 1px solid #c9cffc;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cinzel', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), background 0.18s;
+}
+
+.toggle-switch-wrap.off-state .toggle-knob {
+    transform: translateX(26px);
+    background: linear-gradient(180deg, #575b66 0%, #3c3f47 100%);
+    border-color: #777b88;
+    color: #b8bcc6;
+}
+
+/* Right side of Detail Card (Cost note + UPGRADE button + 10-slot Pip Bar) */
+.detail-right {
+    padding-left: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+}
+
+.upgrade-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.upgrade-note {
+    font-size: 9.5px;
+    line-height: 1.35;
+    color: #7c818c;
+    font-weight: 500;
+}
+
+.upgrade-btn {
+    width: 118px;
+    height: 31px;
+    background: linear-gradient(180deg, #b8b2e8 0%, #8e88c7 100%);
+    border: 1.5px solid #d8d4fa;
+    border-radius: 2px;
+    color: #ffffff;
+    font-family: 'Cinzel', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.6px;
+    cursor: pointer;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    transition: all 0.12s ease;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+.upgrade-btn:hover:not(:disabled) {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+}
+
+.upgrade-btn:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.upgrade-btn:disabled {
+    background: linear-gradient(180deg, #444752 0%, #31343d 100%);
+    border-color: #636775;
+    color: #7e8291;
+    cursor: not-allowed;
+    box-shadow: none;
+    text-shadow: none;
+}
+
+/* 10-Segment Skill Level Bar */
+.level-pips-bar {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    height: 18px;
+    background: #1a1c22;
+    border: 1.5px solid #8a8e99;
+    border-radius: 2px;
+    padding: 1px;
+    gap: 1px;
+}
+
+.pip-cell {
+    background: #2f323b;
+    height: 100%;
+    cursor: pointer;
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pip-cell:hover {
+    background: #484d5c;
+}
+
+.pip-cell.filled {
+    background: linear-gradient(180deg, #b9c2ff 0%, #7c87e0 100%);
+    box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.6);
+}
+
+.pip-cell.mastered-pip {
+    background: linear-gradient(180deg, #ff4788 0%, #b50d49 100%);
+    box-shadow: inset 0 0 4px rgba(255, 190, 210, 0.75);
+}
+
+/* ============================================================
+     SCROLLABLE SKILL LISTING (Exact rows with Hex Icon + MASTERY)
+     ============================================================ */
+.skills-scroll-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 18px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.skills-scroll-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.skills-scroll-list::-webkit-scrollbar-track {
+    background: #14161a;
+}
+
+.skills-scroll-list::-webkit-scrollbar-thumb {
+    background: #555966;
+    border-radius: 3px;
+}
+
+.skill-row {
+    height: 45px;
+    min-height: 45px;
+    background: linear-gradient(90deg, #3c4049 0%, #363a42 60%, #3c4049 100%);
+    border: 1.5px solid #9ea2ac;
+    border-radius: 2px;
+    display: grid;
+    grid-template-columns: 48px 1fr 126px 115px;
+    align-items: center;
+    padding: 0 12px 0 8px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.1s ease, border-color 0.12s ease, background 0.15s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.45);
+}
+
+.skill-row:hover {
+    border-color: #dcd9c0;
+}
+
+.skill-row.selected-row {
+    border-color: #e5e0b8;
+    box-shadow: 0 0 0 1px #e5e0b8, 0 4px 12px rgba(0, 0, 0, 0.65);
+    background: linear-gradient(90deg, #484d59 0%, #3e434e 60%, #484d59 100%);
+}
+
+.skill-row.inactive-row {
+    background: #202329;
+    border-color: #53565e;
+    color: #696d78;
+}
+
+.skill-row.inactive-row .row-hex-icon {
+    filter: brightness(0.48) contrast(0.9);
+}
+
+.skill-row.inactive-row .row-skill-name,
+.skill-row.inactive-row .row-skill-cat {
+    color: #6c707a;
+}
+
+.row-hex-icon {
+    width: 34px;
+    height: 30px;
+    background: #e5dec2;
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.row-hex-icon::after {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    background: #d8d0b2;
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+}
+
+.row-hex-icon svg {
+    position: relative;
+    z-index: 2;
+    width: 20px;
+    height: 20px;
+}
+
+.row-skill-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #f0f2f7;
+    letter-spacing: 0.6px;
+    padding-left: 4px;
+}
+
+/* Diagonal Pink/Magenta MASTERY Ribbon */
+.mastery-ribbon-cell {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.mastery-ribbon {
+    width: 112px;
+    height: 45px;
+    background: linear-gradient(180deg, #ea1563 0%, #8f083b 100%);
+    transform: skewX(-22deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.35), 2px 0 8px rgba(0, 0, 0, 0.35);
+    border-left: 1px solid rgba(255, 160, 195, 0.45);
+    border-right: 1px solid rgba(255, 160, 195, 0.35);
+}
+
+.mastery-ribbon span {
+    transform: skewX(22deg);
+    font-family: 'Cinzel', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    color: #ffffff;
+    letter-spacing: 0.6px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.level-ribbon {
+    width: 96px;
+    height: 24px;
+    background: rgba(156, 165, 235, 0.16);
+    border: 1px solid rgba(156, 165, 235, 0.5);
+    transform: skewX(-22deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.level-ribbon span {
+    transform: skewX(22deg);
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    color: #c2c9ff;
+    letter-spacing: 0.5px;
+}
+
+.row-skill-cat {
+    text-align: center;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #dcdfe6;
+    letter-spacing: 1px;
+}
+
+/* ==================== BOTTOM HEXAGONAL NAVIGATION DOCK ==================== */
+.bottom-hud-dock {
+    position: fixed;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 30;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.85));
+    user-select: none;
+}
+
+.dock-svg-wrapper {
+    width: 680px;
+    height: 112px;
+    position: relative;
+}
+
+/* Interactive Hex Buttons inside Dock */
+.hex-slot {
+    cursor: pointer;
+    transition: filter 0.15s ease;
+}
+
+.hex-slot:hover {
+    filter: brightness(1.16);
+}
+
+.hex-slot:active {
+    filter: brightness(0.92);
+}
+
+/* Center Title Banner above HP/MP/SP bars */
+.dock-title-bar {
+    position: absolute;
+    top: 19px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 146px;
+    height: 18px;
+    background: linear-gradient(180deg, rgba(28, 22, 29, 0.92) 0%, rgba(44, 36, 45, 0.95) 100%);
+    border: 1px solid #6e6859;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: #e6e2d3;
+    cursor: pointer;
+    z-index: 5;
+}
+
+.dock-title-bar:hover {
+    border-color: #b5ae90;
+}
+
+.dock-title-arrow {
+    position: absolute;
+    right: 6px;
+    width: 0;
+    height: 0;
+    border-left: 3.5px solid transparent;
+    border-right: 3.5px solid transparent;
+    border-top: 4.5px solid #dcd7c4;
+}
+
+/* Center Trapezoid Gauges (HP, MP, Stamina) */
+.dock-gauges {
+    position: absolute;
+    bottom: 13px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 172px;
+    height: 55px;
+    z-index: 4;
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+/* Pulse animation for "New Skill !" notification icons */
+@keyframes hexPulse {
+
+    0%,
+    100% {
+        filter: brightness(1);
+    }
+
+    50% {
+        filter: brightness(1.22);
+    }
+}
+
+.pulse-hex {
+    animation: hexPulse 2.4s infinite ease-in-out;
+}
+
+/* Subtle toast notification for Meteor Shower / Actions */
+.system-toast {
+    position: fixed;
+    top: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-16px);
+    background: rgba(36, 30, 36, 0.94);
+    border: 1px solid #cbc5a4;
+    border-left: 4px solid #cbc5a4;
+    padding: 7px 18px;
+    font-size: 11px;
+    color: #f0ede0;
+    letter-spacing: 0.4px;
+    z-index: 50;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s ease, transform 0.22s ease;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7);
+}
+
+.system-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Meteor Shower visual overlay effect when triggered */
+.meteor-flash {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle, rgba(255, 250, 220, 0.9) 0%, rgba(255, 180, 90, 0.4) 50%, transparent 100%);
+    z-index: 45;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.6s ease;
+}
+
+@media (max-width: 960px) {
+    .sys-window {
+        left: calc(50% - 148px);
+        top: calc(50% - 210px);
+    }
+
+    .character-window-wrapper {
+        left: calc(50% - 270px);
+        top: calc(50% - 280px);
+        transform: scale(0.88);
+        transform-origin: center top;
+    }
+}
+
+@media (max-width: 720px) {
+    .bottom-hud-dock {
+        transform: translateX(-50%) scale(0.75);
+        transform-origin: bottom center;
+    }
+
+    .minimap-wrapper {
+        transform: scale(0.78);
+        transform-origin: top right;
+        top: 12px;
+        right: 12px;
+    }
+
+    .character-window-wrapper {
+        transform: scale(0.72);
+        transform-origin: center top;
+        top: calc(50% - 240px);
+    }
+}
