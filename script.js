@@ -421,10 +421,11 @@ document.querySelectorAll('.hex-slot[data-action]').forEach(slot => {
         if (act === 'meteor') {
             triggerMeteorShower();
         } else if (act === 'radar') {
-            const markers = document.getElementById('mapMarkers');
-            const visible = markers.style.opacity !== '0';
-            markers.style.opacity = visible ? '0' : '0.85';
-            showToast(visible ? 'Minimap enemy detection markers hidden' : 'Minimap enemy detection markers displayed');
+            if (typeof triggerRadarScan === 'function') {
+                triggerRadarScan();
+            } else {
+                showToast('Radar / Detection Scan initialized');
+            }
         } else if (act.startsWith('alert')) {
             slot.classList.remove('pulse-hex');
             renderPanelView('skills');
@@ -513,6 +514,17 @@ const SKILL_ICONS = {
 };
 
 const skillsData = [
+    {
+      id: 'enemy_detection',
+      name: 'Enemy Detection',
+      en: 'Enemy Detection (Radar Scan)',
+      category: 'PERCEPTION',
+      level: 10,
+      maxLevel: 10,
+      active: true,
+      icon: 'mind',
+      tab: 'skills'
+    },
     {
         id: 'mind_res',
         name: 'Mental Resistance',
@@ -872,6 +884,9 @@ detailToggleSwitch.addEventListener('click', () => {
     if (!skill) return;
     skill.active = !skill.active;
     satouState.logs.unshift(`Skill [${skill.name}] set to ${skill.active ? 'ON (Active)' : 'OFF (Inactive)'}.`);
+    if (skill.id === 'enemy_detection' && skill.active) {
+        if (typeof triggerRadarScan === 'function') triggerRadarScan();
+    }
     showToast(`Skill "${skill.name}": ${skill.active ? 'ON (Active)' : 'OFF (Inactive)'}`);
     renderDetailCard();
     renderSkillsList();
@@ -1019,11 +1034,24 @@ window.addEventListener('mousemove', (e) => {
         charWin.style.left = `${charOrigLeft + dx}px`;
         charWin.style.top = `${charOrigTop + dy}px`;
     }
+    if (typeof isDraggingMapWin !== 'undefined' && isDraggingMapWin) {
+        const dx = e.clientX - mapWinStartX;
+        const dy = e.clientY - mapWinStartY;
+        mapWin.style.left = `${mapWinOrigLeft + dx}px`;
+        mapWin.style.top = `${mapWinOrigTop + dy}px`;
+    }
+    if (typeof isPanningModalMap !== 'undefined' && isPanningModalMap) {
+        mapModalPanX = (e.clientX - modalMapStartX) / mapModalZoom;
+        mapModalPanY = (e.clientY - modalMapStartY) / mapModalZoom;
+        if (typeof applyMainMapTransform === 'function') applyMainMapTransform();
+    }
 });
 
 window.addEventListener('mouseup', () => {
     isDraggingWin = false;
     isDraggingChar = false;
+    if (typeof isDraggingMapWin !== 'undefined') isDraggingMapWin = false;
+    if (typeof isPanningModalMap !== 'undefined') isPanningModalMap = false;
 });
 
 window.resetWinPos = function () {
@@ -1039,6 +1067,368 @@ window.resetWinPos = function () {
 /* Minimap Zoom & Pan */
 let mapZoom = 1;
 let mapPanX = 0, mapPanY = 0;
+/* =========================================================================
+     6. MAIN TACTICAL MAP MODAL CONTROLLER (Anime Exact Replica)
+     ========================================================================= */
+  const mapWin = document.getElementById('mapWindowWrapper');
+  const mapDragHandle = document.getElementById('mapDragHandle');
+  const closeMapWindowBtn = document.getElementById('closeMapWindowBtn');
+  const mainMapViewport = document.getElementById('mainMapViewport');
+  const mainMapCanvas = document.getElementById('mainMapCanvas');
+  const mapTabMap = document.getElementById('mapTabMap');
+  const mapTabMarker = document.getElementById('mapTabMarker');
+  const mapTabSearch = document.getElementById('mapTabSearch');
+  const mapMarkerCards = document.getElementById('mainMapMarkerCards');
+  const mapSearchOverlay = document.getElementById('mapSearchOverlay');
+  const mapSearchInput = document.getElementById('mapSearchInput');
+  const mapSearchClose = document.getElementById('mapSearchClose');
+  const map2dToggleBtn = document.getElementById('map2dToggleBtn');
+  const map2dLabel = document.getElementById('map2dLabel');
+
+  let mapModalZoom = 1.0;
+  let mapModalPanX = 0, mapModalPanY = 0;
+  let isPanningModalMap = false, modalMapStartX = 0, modalMapStartY = 0;
+  let isDraggingMapWin = false, mapWinStartX = 0, mapWinStartY = 0, mapWinOrigLeft = 0, mapWinOrigTop = 0;
+  let is3dMode = false;
+  let showMarkerCards = false;
+
+  function applyMainMapTransform() {
+    if (is3dMode) {
+      mainMapCanvas.style.transform = `perspective(900px) rotateX(26deg) rotateZ(-1deg) scale(${mapModalZoom * 0.96}) translate(${mapModalPanX}px, ${mapModalPanY}px)`;
+    } else {
+      mainMapCanvas.style.transform = `scale(${mapModalZoom}) translate(${mapModalPanX}px, ${mapModalPanY}px)`;
+    }
+  }
+
+  function openMapModal() {
+    mapWin.classList.remove('hidden');
+    mapWin.style.zIndex = '26';
+    charWin.style.zIndex = '20';
+    mainWin.style.zIndex = '19';
+    showToast("Opened Area Map: Dragon's Valley");
+  }
+  window.openMapModal = openMapModal;
+
+  function closeMapModal() {
+    mapWin.classList.add('hidden');
+    showToast('Map window closed (Click minimap to re-open)');
+  }
+  closeMapWindowBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeMapModal();
+  });
+
+  // Clicking map window brings it to front
+  mapWin.addEventListener('mousedown', () => {
+    mapWin.style.zIndex = '26';
+    charWin.style.zIndex = '20';
+    mainWin.style.zIndex = '19';
+  });
+
+  // Dragging map modal by top header tab
+  mapDragHandle.addEventListener('mousedown', (e) => {
+    if (e.target.id === 'closeMapWindowBtn') return;
+    isDraggingMapWin = true;
+    const rect = mapWin.getBoundingClientRect();
+    mapWinOrigLeft = rect.left;
+    mapWinOrigTop = rect.top;
+    mapWinStartX = e.clientX;
+    mapWinStartY = e.clientY;
+    mapWin.style.zIndex = '26';
+    charWin.style.zIndex = '20';
+    mainWin.style.zIndex = '19';
+  });
+
+  // 2D / 3D Perspective Toggle (Screenshot 2 bottom-right button)
+  map2dToggleBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    is3dMode = !is3dMode;
+    map2dToggleBtn.classList.toggle('is-3d', is3dMode);
+    map2dLabel.textContent = is3dMode ? '3D' : '2D';
+    applyMainMapTransform();
+    showToast(is3dMode ? 'Map Mode: 3D Isometric View' : 'Map Mode: 2D Planar View');
+  });
+
+  /* Radar / Detection Display Scanner */
+  let isRadarScanning = false;
+  let hasRadarScanned = false;
+  let scanAnimFrameId = null;
+
+  function resetMapDotsToWhite() {
+    const dots = document.querySelectorAll('.map-unit-dot');
+    dots.forEach(d => {
+      d.classList.remove('state-red', 'ping-detected');
+      d.classList.add('state-white');
+    });
+    const scanLine = document.getElementById('mapScanLine');
+    if (scanLine) {
+      scanLine.classList.remove('scanning', 'scanned-settled');
+      scanLine.style.display = 'none';
+      scanLine.style.top = '0px';
+    }
+    hasRadarScanned = false;
+  }
+
+  function triggerRadarScan() {
+    // If map window is closed, open it so user can watch the red scan light
+    if (mapWin && mapWin.classList.contains('hidden')) {
+      openMapModal();
+    }
+
+    if (isRadarScanning) return;
+    isRadarScanning = true;
+
+    // Short tick to ensure map window is rendered and dimensions are computed
+    setTimeout(() => {
+      const scanLine = document.getElementById('mapScanLine');
+      const viewport = document.getElementById('mainMapViewport');
+      const dots = Array.from(document.querySelectorAll('.map-unit-dot'));
+
+      if (!scanLine || !viewport) {
+        isRadarScanning = false;
+        return;
+      }
+
+      // Reset dots to white at start of scan
+      dots.forEach(d => {
+        d.classList.remove('state-red', 'ping-detected');
+        d.classList.add('state-white');
+      });
+
+      // Prepare scan line for top-to-bottom sweep
+      scanLine.classList.remove('scanned-settled');
+      scanLine.classList.add('scanning');
+      scanLine.style.display = 'block';
+      scanLine.style.bottom = 'auto';
+      scanLine.style.top = '0px';
+
+      showToast('Enemy Detection: Scanning battlefield with radar light...');
+
+      const duration = 2200; // 2.2 seconds scan duration
+      const startTime = performance.now();
+      const scannedSet = new Set();
+
+      function scanStep(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(1, elapsed / duration);
+
+        // Move scan line from top to bottom
+        const currentYPx = progress * (viewport.clientHeight - 4);
+        scanLine.style.top = `${currentYPx}px`;
+
+        // Check which dots are passed by the red scan wave
+        dots.forEach(dot => {
+          if (!scannedSet.has(dot)) {
+            const dotY = parseFloat(dot.dataset.y) || 270;
+            const dotProgress = dotY / 540; // 0 to 1 across 540 viewBox height
+
+            if (progress >= dotProgress) {
+              scannedSet.add(dot);
+              const type = dot.dataset.type;
+              dot.classList.add('ping-detected');
+              if (type === 'enemy') {
+                // Enemy identified: Turn White -> Red!
+                dot.classList.remove('state-white');
+                dot.classList.add('state-red');
+              } else {
+                // Confirmed Non-Enemy / Neutral: Remains White!
+                dot.classList.add('state-white');
+              }
+            }
+          }
+        });
+
+        if (progress < 1) {
+          scanAnimFrameId = requestAnimationFrame(scanStep);
+        } else {
+          // Scan complete: Settle red line at bottom of map
+          isRadarScanning = false;
+          hasRadarScanned = true;
+          scanLine.classList.remove('scanning');
+          scanLine.classList.add('scanned-settled');
+          showToast('Enemy Detection Complete: 4 Hostiles Identified, 3 Non-Enemies');
+
+          // Sync minimap markers
+          const minimapMarkers = document.getElementById('mapMarkers');
+          if (minimapMarkers) {
+            minimapMarkers.style.opacity = '0.9';
+          }
+        }
+      }
+
+      scanAnimFrameId = requestAnimationFrame(scanStep);
+    }, 120);
+  }
+  window.triggerRadarScan = triggerRadarScan;
+
+  // Subtabs Bar: MAP | MARKER | SEARCH
+  function setActiveMapTab(tabBtn) {
+    if (!tabBtn) return;
+    [mapTabMap, mapTabMarker, mapTabSearch].forEach(btn => { if (btn) btn.classList.remove('active'); });
+    tabBtn.classList.add('active');
+  }
+  window.setActiveMapTab = setActiveMapTab;
+
+  if (mapTabMap) {
+    mapTabMap.addEventListener('click', () => {
+      setActiveMapTab(mapTabMap);
+      showMarkerCards = false;
+      if (mapMarkerCards) mapMarkerCards.setAttribute('opacity', '0');
+      if (mapSearchOverlay) mapSearchOverlay.classList.remove('visible');
+      showToast("Area Map: Dragon's Valley Tactical Terrain");
+    });
+  }
+
+  if (mapTabMarker) {
+    mapTabMarker.addEventListener('click', () => {
+      setActiveMapTab(mapTabMarker);
+      showMarkerCards = !showMarkerCards;
+      if (mapMarkerCards) mapMarkerCards.setAttribute('opacity', showMarkerCards ? '1' : '0');
+      if (mapSearchOverlay) mapSearchOverlay.classList.remove('visible');
+      showToast(showMarkerCards ? 'Markers: Tactical Unit Intel Active' : 'Markers Hidden');
+    });
+  }
+
+  if (mapTabSearch) {
+    mapTabSearch.addEventListener('click', () => {
+      setActiveMapTab(mapTabSearch);
+      if (mapSearchOverlay) {
+        mapSearchOverlay.classList.toggle('visible');
+        if (mapSearchOverlay.classList.contains('visible') && mapSearchInput) {
+          mapSearchInput.focus();
+          showToast('Search: Type to filter units or locations');
+        }
+      }
+    });
+  }
+
+  if (mapSearchClose) {
+    mapSearchClose.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (mapSearchOverlay) mapSearchOverlay.classList.remove('visible');
+      setActiveMapTab(mapTabMap);
+    });
+  }
+
+  if (mapSearchInput) {
+    mapSearchInput.addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase().trim();
+      const cards = document.querySelectorAll('.anime-callout-card');
+      cards.forEach(card => {
+        const txt = card.textContent.toLowerCase();
+        if (!q || txt.includes(q)) {
+          card.style.display = '';
+          card.setAttribute('opacity', '1');
+        } else {
+          card.setAttribute('opacity', '0.2');
+        }
+      });
+      if (q && mapMarkerCards) {
+        mapMarkerCards.setAttribute('opacity', '1');
+      }
+    });
+  }
+
+  // Pan within map viewport
+  if (mainMapViewport) {
+    mainMapViewport.addEventListener('mousedown', (e) => {
+      if (e.target.closest('#map2dToggleBtn') || e.target.closest('#mapSearchOverlay') || e.target.closest('.anime-callout-card')) return;
+      isPanningModalMap = true;
+      modalMapStartX = e.clientX - mapModalPanX * mapModalZoom;
+      modalMapStartY = e.clientY - mapModalPanY * mapModalZoom;
+    });
+
+    // Mouse wheel zoom on map viewport
+    mainMapViewport.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 0.15 : -0.15;
+      mapModalZoom = Math.min(3.0, Math.max(0.7, +(mapModalZoom + delta).toFixed(2)));
+      applyMainMapTransform();
+    }, { passive: false });
+
+    // Double click resets zoom and pan
+    mainMapViewport.addEventListener('dblclick', (e) => {
+      if (e.target.closest('#map2dToggleBtn') || e.target.closest('#mapSearchOverlay') || e.target.closest('.anime-callout-card')) return;
+      mapModalZoom = 1.0;
+      mapModalPanX = 0;
+      mapModalPanY = 0;
+      applyMainMapTransform();
+      showToast('Map View Reset to Default');
+    });
+  }
+
+  // Escape key closes map modal
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && mapWin && !mapWin.classList.contains('hidden')) {
+      closeMapModal();
+    }
+  });
+
+  const UNIT_INTEL = {
+    dot7: { faction: 'Dragon Valley', rank: 'Wyvern Scout', lvl: 'Lv 28', type: 'Hostile', sub: 'AIR SWARM', name: 'Glaive-Wing Wyvern', age: 'Adult (42)', sex: 'Male', race: 'Lesser Dragonkin' },
+    dot6: { faction: 'Dragon Valley', rank: 'Flocking Wyvern', lvl: 'Lv 29', type: 'Hostile', sub: 'AIR SWARM', name: 'Storm-Crest Wyvern', age: 'Adult (38)', sex: 'Female', race: 'Lesser Dragonkin' },
+    dot5: { faction: 'Canyon Outlaws', rank: 'Raider Leader', lvl: 'Lv 24', type: 'Hostile', sub: 'BANDIT AMBUSH', name: 'Vance the Scarred', age: '31', sex: 'Male', race: 'Human' },
+    dot4: { faction: 'Seiryuu Guild', rank: 'Caravan Master', lvl: 'Lv 14', type: 'Non-Enemy', sub: 'TRADE CONVOY', name: 'Milo Brand', age: '45', sex: 'Male', race: 'Human' },
+    dot3: { faction: 'Explorer Guild', rank: 'Silver Adventurer', lvl: 'Lv 16', type: 'Non-Enemy', sub: 'ESCORT PARTY', name: 'Theresa Vane', age: '22', sex: 'Female', race: 'Half-Elf' },
+    dot2: { faction: 'Shiga Kingdom', rank: 'Knight Courier', lvl: 'Lv 21', type: 'Non-Enemy', sub: 'ROYAL MESSENGER', name: 'Sir Raymond Delacroix', age: '27', sex: 'Male', race: 'Human' },
+    dot1: { faction: 'Canyon Outlaws', rank: 'Forward Scout', lvl: 'Lv 22', type: 'Hostile', sub: 'LOOKOUT SQUAD', name: 'Jarek Quickfoot', age: '24', sex: 'Male', race: 'Human (Plains Tribe)' }
+  };
+
+  // Card click & dropdown toggle handlers
+  document.querySelectorAll('.anime-callout-card').forEach(card => {
+    card.addEventListener('click', (e) => {
+      e.stopPropagation();
+      card.classList.toggle('expanded');
+      const dotId = card.dataset.dot;
+      const dot = document.querySelector(`.map-unit-dot[data-id="${dotId}"]`);
+      if (dot) {
+        dot.classList.add('ping-detected');
+        setTimeout(() => dot.classList.remove('ping-detected'), 450);
+      }
+    });
+  });
+
+  // Dot click handlers: highlights card and toggles appraisal dropdown
+  document.querySelectorAll('.map-unit-dot').forEach(dot => {
+    dot.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const dotId = dot.dataset.id;
+      const info = UNIT_INTEL[dotId];
+
+      // Make sure cards layer is visible
+      mapMarkerCards.setAttribute('opacity', '1');
+      showMarkerCards = true;
+      setActiveMapTab(mapTabMarker);
+
+      // Focus card
+      document.querySelectorAll('.anime-callout-card').forEach(c => c.classList.remove('active-target'));
+      const card = document.querySelector(`.anime-callout-card[data-dot="${dotId}"]`);
+      if (card) {
+        card.classList.add('active-target');
+        card.classList.toggle('expanded');
+      }
+
+      if (info) {
+        showToast(`[${info.faction}] ${info.rank} +${info.lvl} ｜ ${info.name} (${info.race})`);
+      }
+    });
+  });
+
+  window.resetWinPos = function() {
+    mainWin.style.left = 'calc(50% - 428px)';
+    mainWin.style.top = 'calc(50% - 210px)';
+    mainWin.classList.remove('hidden');
+    charWin.style.left = 'calc(50% - 112px)';
+    charWin.style.top = 'calc(50% - 320px)';
+    charWin.classList.remove('hidden');
+    if (mapWin) {
+      mapWin.style.left = 'calc(50% - 370px)';
+      mapWin.style.top = 'calc(50% - 270px)';
+    }
+    showToast('Window positions reset to center');
+  };
+
+
 const minimapContent = document.getElementById('minimapContent');
 const zoomSymbol = document.getElementById('zoomSymbol');
 
@@ -1064,10 +1454,20 @@ document.getElementById('minimapZoomBtn').addEventListener('click', () => {
 const minimapDragArea = document.getElementById('minimapDragArea');
 let isPanningMap = false, mapStartX = 0, mapStartY = 0;
 
+let minimapMouseDownPos = { x: 0, y: 0 };
 minimapDragArea.addEventListener('mousedown', (e) => {
     isPanningMap = true;
     mapStartX = e.clientX - mapPanX;
     mapStartY = e.clientY - mapPanY;
+    minimapMouseDownPos = { x: e.clientX, y: e.clientY };
+});
+
+minimapDragArea.addEventListener('click', (e) => {
+    if (e.target.closest('#minimapZoomBtn')) return;
+    const dist = Math.hypot(e.clientX - minimapMouseDownPos.x, e.clientY - minimapMouseDownPos.y);
+    if (dist < 8) {
+        if (typeof openMapModal === 'function') openMapModal();
+    }
 });
 
 window.addEventListener('mousemove', (e) => {

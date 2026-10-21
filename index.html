@@ -354,6 +354,340 @@
 
     </div>
 
+    <!-- ==========================================================
+            ANIME EXACT REPLICA: MAP MODAL (Opened by clicking Minimap)
+            ========================================================== -->
+      <div class="character-window-wrapper map-window-wrapper interactive hidden" id="mapWindowWrapper">
+        <!-- Anime Top Header with Draggable Trapezoid Location Tab -->
+        <div class="map-window-header" id="mapDragHandle">
+          <div class="map-location-tab">
+            <span class="map-dropdown-arrow">▼</span>
+            <span class="map-location-title" id="mapLocationTitle">Dragon's Valley</span>
+          </div>
+          <button class="map-close-btn" id="closeMapWindowBtn" title="Close Map Window">×</button>
+        </div>
+
+        <!-- Anime Subtabs Bar: MAP | MARKER | SEARCH -->
+        <div class="map-subtabs-bar">
+          <div class="map-tab-btn active" id="mapTabMap">MAP</div>
+          <div class="map-tab-btn" id="mapTabMarker">MARKER</div>
+          <div class="map-tab-btn" id="mapTabSearch">SEARCH</div>
+        </div>
+
+        <!-- Main Map Viewport Area -->
+        <div class="main-map-viewport" id="mainMapViewport" title="Drag to pan / Scroll to zoom / Double-click to reset">
+          <!-- Search Bar (Active on SEARCH tab) -->
+          <div class="map-search-bar-overlay" id="mapSearchOverlay">
+            <span style="color: #dfd07c; font-size: 13px;">🔍</span>
+            <input type="text" class="map-search-input" id="mapSearchInput" placeholder="Search dragon valley units, terrain, markers..." />
+            <span class="map-search-close" id="mapSearchClose">✕</span>
+          </div>
+
+          <div class="main-map-canvas-container" id="mainMapCanvas">
+            <svg viewBox="0 0 800 540" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+              <defs>
+                <!-- Base Parchment Gradient -->
+                <radialGradient id="animeMapBaseGrad" cx="50%" cy="50%" r="65%">
+                  <stop offset="0%" stop-color="#f1e4c3" />
+                  <stop offset="60%" stop-color="#e2cf9f" />
+                  <stop offset="100%" stop-color="#cfb67e" />
+                </radialGradient>
+
+                <!-- Canyon Rim Gradient -->
+                <linearGradient id="animeCanyonRimGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#c9aa66" />
+                  <stop offset="50%" stop-color="#b6954e" />
+                  <stop offset="100%" stop-color="#9d7c35" />
+                </linearGradient>
+
+                <!-- Valley Floor Path Gradient -->
+                <linearGradient id="animePathGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#f9f5ea" />
+                  <stop offset="50%" stop-color="#f3ebd4" />
+                  <stop offset="100%" stop-color="#e8dcbe" />
+                </linearGradient>
+
+                <!-- Terrain Drop Shadow -->
+                <filter id="animeTerrainShadow" x="-10%" y="-10%" width="120%" height="120%">
+                  <feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="#5a451d" flood-opacity="0.38" />
+                </filter>
+              </defs>
+
+              <!-- Parchment Base -->
+              <rect width="800" height="540" fill="url(#animeMapBaseGrad)" />
+
+              <!-- Elevation Plateau Layer 1 (North/East High Rim) -->
+              <path d="M0 0 H800 V160 Q660 125 560 100 T300 95 Q140 105 0 145 Z" fill="#c4a563" opacity="0.55" />
+              <path d="M0 0 H800 V110 Q620 70 470 60 T160 70 L0 95 Z" fill="#b08e48" opacity="0.4" />
+              <path d="M0 145 Q160 85 320 100 T580 110 T800 155" fill="none" stroke="#9a7a3b" stroke-width="0.8" />
+              <path d="M0 95 Q160 55 330 70 T600 80 T800 105" fill="none" stroke="#9a7a3b" stroke-width="0.6" stroke-dasharray="3 3" />
+
+              <!-- Elevation Plateau Layer 2 (South/West High Ridge) -->
+              <path d="M0 540 H800 V390 Q670 415 570 440 T320 470 T0 500 Z" fill="#c4a563" opacity="0.55" />
+              <path d="M0 540 H800 V450 Q640 470 490 495 T180 520 L0 535 Z" fill="#b08e48" opacity="0.4" />
+              <path d="M0 500 Q180 470 360 455 T800 390" fill="none" stroke="#9a7a3b" stroke-width="0.8" />
+              <path d="M0 530 Q220 500 430 485 T800 435" fill="none" stroke="#9a7a3b" stroke-width="0.6" stroke-dasharray="3 3" />
+
+              <!-- Winding Dragon Valley Canyon Walls & Chasm -->
+              <path d="M-10 420
+                C100 410 150 395 210 365
+                C280 330 320 300 380 285
+                C440 270 480 290 530 260
+                C600 220 635 160 690 130
+                C735 105 775 110 815 115
+                L815 170
+                C755 160 720 165 675 195
+                C620 230 585 295 530 315
+                C470 345 420 325 360 350
+                C300 380 245 415 185 435
+                C115 460 50 470 -10 475 Z"
+                fill="url(#animeCanyonRimGrad)" stroke="#aa863c" stroke-width="1.2" filter="url(#animeTerrainShadow)" />
+
+              <!-- Central Rocky Gorge Path (Matching Screenshot 3 Road) -->
+              <path d="M-10 445
+                C100 435 150 420 210 392
+                C280 358 320 330 380 315
+                C440 300 480 318 530 290
+                C595 252 630 200 685 172
+                C730 148 770 152 815 156
+                L815 132
+                C770 128 730 122 685 146
+                C630 176 595 230 530 268
+                C480 295 440 278 380 292
+                C320 308 280 336 210 370
+                C150 398 100 412 -10 422 Z"
+                fill="url(#animePathGrad)" stroke="#c4a56c" stroke-width="1" />
+
+              <!-- Dashed Path Center Guideline -->
+              <path d="M0 433 C180 398 330 318 530 278 Q635 220 800 140"
+                fill="none" stroke="#d5be86" stroke-width="1.2" stroke-dasharray="4 4" />
+
+              <!-- Full Tactical Map Grid Lines (Thin, subtle Anime Coordinates) -->
+              <g stroke="#5f4e1c" stroke-opacity="0.22" stroke-width="0.6">
+                <!-- Horizontal Grid Lines -->
+                <path d="M0 60 H800 M0 120 H800 M0 180 H800 M0 240 H800 M0 300 H800 M0 360 H800 M0 420 H800 M0 480 H800" />
+                <!-- Vertical Grid Lines -->
+                <path d="M80 0 V540 M160 0 V540 M240 0 V540 M320 0 V540 M400 0 V540 M480 0 V540 M560 0 V540 M640 0 V540 M720 0 V540" />
+              </g>
+
+              <!-- Tactical Unit Dots (Initially White / Non-Enemy; Scanned via Radar) -->
+              <g id="mainMapMarkers" class="map-markers-group">
+                <!-- Dot 7 (Upper-Right Terrain - Wyvern Scout / Enemy) -->
+                <circle id="mapDot7" class="map-unit-dot state-white" data-id="dot7" data-type="enemy" data-y="145" cx="455" cy="145" r="14" />
+                <!-- Dot 6 (Upper-Left Terrain - Wyvern Vanguard / Enemy) -->
+                <circle id="mapDot6" class="map-unit-dot state-white" data-id="dot6" data-type="enemy" data-y="175" cx="335" cy="175" r="14" />
+                <!-- Dot 5 (Road Right - Ambush Vanguard / Enemy) -->
+                <circle id="mapDot5" class="map-unit-dot state-white" data-id="dot5" data-type="enemy" data-y="240" cx="555" cy="240" r="14" />
+                <!-- Dot 4 (Road Mid-Right - Traveling Merchant Caravan / Non-Enemy) -->
+                <circle id="mapDot4" class="map-unit-dot state-white" data-id="dot4" data-type="neutral" data-y="270" cx="475" cy="270" r="14" />
+                <!-- Dot 3 (Road Center - Traveling Adventurers / Non-Enemy) -->
+                <circle id="mapDot3" class="map-unit-dot state-white" data-id="dot3" data-type="neutral" data-y="288" cx="395" cy="288" r="14" />
+                <!-- Dot 2 (Road Mid-Left - Royal Escort Squad / Non-Enemy) -->
+                <circle id="mapDot2" class="map-unit-dot state-white" data-id="dot2" data-type="neutral" data-y="320" cx="325" cy="320" r="14" />
+                <!-- Dot 1 (Road Far-Left - Raider Scout / Enemy) -->
+                <circle id="mapDot1" class="map-unit-dot state-white" data-id="dot1" data-type="enemy" data-y="360" cx="235" cy="360" r="14" />
+              </g>
+
+                            <!-- Tactical Marker Callout Cards for All 7 Dots (Death March [Faction] : [Rank] + [Lv]) -->
+              <g id="mainMapMarkerCards" class="tactical-markers-layer" opacity="0" style="transition: opacity 0.25s ease;">
+                <!-- Tactical Intel Card for dot7: [Dragon Valley] : Wyvern Scout + Lv 28 -->
+                <g class="anime-callout-item" data-dot="dot7" id="callout_dot7">
+                  <line x1="465" y1="140" x2="490" y2="92" stroke="#8e8874" stroke-width="1.3" stroke-dasharray="3 2" />
+                  <circle cx="490" cy="92" r="2.5" fill="#dfd07c" stroke="#333" stroke-width="0.8" />
+                  <foreignObject x="490" y="70" width="235" height="150" style="overflow: visible;">
+                    <div xmlns="http://www.w3.org/1999/xhtml" class="anime-callout-card" data-dot="dot7">
+                      <div class="card-main-header">
+                        <div class="card-title-text" title="[Dragon Valley] : Wyvern Scout + Lv 28">
+                          <span class="card-faction">[Dragon Valley] :</span>
+                          <span class="card-rank">Wyvern Scout</span>
+                          <span class="card-lvl">+ Lv 28</span>
+                        </div>
+                        <button class="card-dropdown-arrow" title="Toggle Name / Age / Sex / Race">▼</button>
+                      </div>
+                      <div class="card-sub-status">
+                        <span class="status-badge-enemy">● AIR SWARM ｜ HOSTILE</span>
+                      </div>
+                      <div class="card-dropdown-content">
+                        <div class="detail-row"><span class="detail-lbl">NAME:</span> <span class="detail-val">Glaive-Wing Wyvern</span></div>
+                        <div class="detail-row"><span class="detail-lbl">AGE:</span> <span class="detail-val">Adult (42)</span> <span class="detail-lbl" style="margin-left: 6px;">SEX:</span> <span class="detail-val">Male</span></div>
+                        <div class="detail-row"><span class="detail-lbl">RACE:</span> <span class="detail-val">Lesser Dragonkin</span></div>
+                      </div>
+                    </div>
+                  </foreignObject>
+                </g>
+                <!-- Tactical Intel Card for dot6: [Dragon Valley] : Flocking Wyvern + Lv 29 -->
+                <g class="anime-callout-item" data-dot="dot6" id="callout_dot6">
+                  <line x1="325" y1="170" x2="305" y2="127" stroke="#8e8874" stroke-width="1.3" stroke-dasharray="3 2" />
+                  <circle cx="305" cy="127" r="2.5" fill="#dfd07c" stroke="#333" stroke-width="0.8" />
+                  <foreignObject x="70" y="105" width="235" height="150" style="overflow: visible;">
+                    <div xmlns="http://www.w3.org/1999/xhtml" class="anime-callout-card" data-dot="dot6">
+                      <div class="card-main-header">
+                        <div class="card-title-text" title="[Dragon Valley] : Flocking Wyvern + Lv 29">
+                          <span class="card-faction">[Dragon Valley] :</span>
+                          <span class="card-rank">Flocking Wyvern</span>
+                          <span class="card-lvl">+ Lv 29</span>
+                        </div>
+                        <button class="card-dropdown-arrow" title="Toggle Name / Age / Sex / Race">▼</button>
+                      </div>
+                      <div class="card-sub-status">
+                        <span class="status-badge-enemy">● AIR SWARM ｜ HOSTILE</span>
+                      </div>
+                      <div class="card-dropdown-content">
+                        <div class="detail-row"><span class="detail-lbl">NAME:</span> <span class="detail-val">Storm-Crest Wyvern</span></div>
+                        <div class="detail-row"><span class="detail-lbl">AGE:</span> <span class="detail-val">Adult (38)</span> <span class="detail-lbl" style="margin-left: 6px;">SEX:</span> <span class="detail-val">Female</span></div>
+                        <div class="detail-row"><span class="detail-lbl">RACE:</span> <span class="detail-val">Lesser Dragonkin</span></div>
+                      </div>
+                    </div>
+                  </foreignObject>
+                </g>
+                <!-- Tactical Intel Card for dot5: [Canyon Outlaws] : Raider Leader + Lv 24 -->
+                <g class="anime-callout-item" data-dot="dot5" id="callout_dot5">
+                  <line x1="565" y1="235" x2="585" y2="188" stroke="#8e8874" stroke-width="1.3" stroke-dasharray="3 2" />
+                  <circle cx="585" cy="188" r="2.5" fill="#dfd07c" stroke="#333" stroke-width="0.8" />
+                  <foreignObject x="545" y="165" width="235" height="150" style="overflow: visible;">
+                    <div xmlns="http://www.w3.org/1999/xhtml" class="anime-callout-card" data-dot="dot5">
+                      <div class="card-main-header">
+                        <div class="card-title-text" title="[Canyon Outlaws] : Raider Leader + Lv 24">
+                          <span class="card-faction">[Canyon Outlaws] :</span>
+                          <span class="card-rank">Raider Leader</span>
+                          <span class="card-lvl">+ Lv 24</span>
+                        </div>
+                        <button class="card-dropdown-arrow" title="Toggle Name / Age / Sex / Race">▼</button>
+                      </div>
+                      <div class="card-sub-status">
+                        <span class="status-badge-enemy">● BANDIT AMBUSH ｜ HOSTILE</span>
+                      </div>
+                      <div class="card-dropdown-content">
+                        <div class="detail-row"><span class="detail-lbl">NAME:</span> <span class="detail-val">Vance the Scarred</span></div>
+                        <div class="detail-row"><span class="detail-lbl">AGE:</span> <span class="detail-val">31</span> <span class="detail-lbl" style="margin-left: 6px;">SEX:</span> <span class="detail-val">Male</span></div>
+                        <div class="detail-row"><span class="detail-lbl">RACE:</span> <span class="detail-val">Human</span></div>
+                      </div>
+                    </div>
+                  </foreignObject>
+                </g>
+                <!-- Tactical Intel Card for dot4: [Seiryuu Guild] : Caravan Master + Lv 14 -->
+                <g class="anime-callout-item" data-dot="dot4" id="callout_dot4">
+                  <line x1="485" y1="278" x2="510" y2="335" stroke="#8e8874" stroke-width="1.3" stroke-dasharray="3 2" />
+                  <circle cx="510" cy="335" r="2.5" fill="#dfd07c" stroke="#333" stroke-width="0.8" />
+                  <foreignObject x="510" y="315" width="235" height="150" style="overflow: visible;">
+                    <div xmlns="http://www.w3.org/1999/xhtml" class="anime-callout-card" data-dot="dot4">
+                      <div class="card-main-header">
+                        <div class="card-title-text" title="[Seiryuu Guild] : Caravan Master + Lv 14">
+                          <span class="card-faction">[Seiryuu Guild] :</span>
+                          <span class="card-rank">Caravan Master</span>
+                          <span class="card-lvl">+ Lv 14</span>
+                        </div>
+                        <button class="card-dropdown-arrow" title="Toggle Name / Age / Sex / Race">▼</button>
+                      </div>
+                      <div class="card-sub-status">
+                        <span class="status-badge-neutral">● TRADE CONVOY ｜ NON-ENEMY</span>
+                      </div>
+                      <div class="card-dropdown-content">
+                        <div class="detail-row"><span class="detail-lbl">NAME:</span> <span class="detail-val">Milo Brand</span></div>
+                        <div class="detail-row"><span class="detail-lbl">AGE:</span> <span class="detail-val">45</span> <span class="detail-lbl" style="margin-left: 6px;">SEX:</span> <span class="detail-val">Male</span></div>
+                        <div class="detail-row"><span class="detail-lbl">RACE:</span> <span class="detail-val">Human</span></div>
+                      </div>
+                    </div>
+                  </foreignObject>
+                </g>
+                <!-- Tactical Intel Card for dot3: [Explorer Guild] : Silver Adventurer + Lv 16 -->
+                <g class="anime-callout-item" data-dot="dot3" id="callout_dot3">
+                  <line x1="395" y1="302" x2="395" y2="360" stroke="#8e8874" stroke-width="1.3" stroke-dasharray="3 2" />
+                  <circle cx="395" cy="360" r="2.5" fill="#dfd07c" stroke="#333" stroke-width="0.8" />
+                  <foreignObject x="285" y="360" width="235" height="150" style="overflow: visible;">
+                    <div xmlns="http://www.w3.org/1999/xhtml" class="anime-callout-card" data-dot="dot3">
+                      <div class="card-main-header">
+                        <div class="card-title-text" title="[Explorer Guild] : Silver Adventurer + Lv 16">
+                          <span class="card-faction">[Explorer Guild] :</span>
+                          <span class="card-rank">Silver Adventurer</span>
+                          <span class="card-lvl">+ Lv 16</span>
+                        </div>
+                        <button class="card-dropdown-arrow" title="Toggle Name / Age / Sex / Race">▼</button>
+                      </div>
+                      <div class="card-sub-status">
+                        <span class="status-badge-neutral">● ESCORT PARTY ｜ NON-ENEMY</span>
+                      </div>
+                      <div class="card-dropdown-content">
+                        <div class="detail-row"><span class="detail-lbl">NAME:</span> <span class="detail-val">Theresa Vane</span></div>
+                        <div class="detail-row"><span class="detail-lbl">AGE:</span> <span class="detail-val">22</span> <span class="detail-lbl" style="margin-left: 6px;">SEX:</span> <span class="detail-val">Female</span></div>
+                        <div class="detail-row"><span class="detail-lbl">RACE:</span> <span class="detail-val">Half-Elf</span></div>
+                      </div>
+                    </div>
+                  </foreignObject>
+                </g>
+                <!-- Tactical Intel Card for dot2: [Shiga Kingdom] : Knight Courier + Lv 21 -->
+                <g class="anime-callout-item" data-dot="dot2" id="callout_dot2">
+                  <line x1="315" y1="328" x2="310" y2="410" stroke="#8e8874" stroke-width="1.3" stroke-dasharray="3 2" />
+                  <circle cx="310" cy="410" r="2.5" fill="#dfd07c" stroke="#333" stroke-width="0.8" />
+                  <foreignObject x="75" y="390" width="235" height="150" style="overflow: visible;">
+                    <div xmlns="http://www.w3.org/1999/xhtml" class="anime-callout-card" data-dot="dot2">
+                      <div class="card-main-header">
+                        <div class="card-title-text" title="[Shiga Kingdom] : Knight Courier + Lv 21">
+                          <span class="card-faction">[Shiga Kingdom] :</span>
+                          <span class="card-rank">Knight Courier</span>
+                          <span class="card-lvl">+ Lv 21</span>
+                        </div>
+                        <button class="card-dropdown-arrow" title="Toggle Name / Age / Sex / Race">▼</button>
+                      </div>
+                      <div class="card-sub-status">
+                        <span class="status-badge-neutral">● ROYAL MESSENGER ｜ NON-ENEMY</span>
+                      </div>
+                      <div class="card-dropdown-content">
+                        <div class="detail-row"><span class="detail-lbl">NAME:</span> <span class="detail-val">Sir Raymond Delacroix</span></div>
+                        <div class="detail-row"><span class="detail-lbl">AGE:</span> <span class="detail-val">27</span> <span class="detail-lbl" style="margin-left: 6px;">SEX:</span> <span class="detail-val">Male</span></div>
+                        <div class="detail-row"><span class="detail-lbl">RACE:</span> <span class="detail-val">Human</span></div>
+                      </div>
+                    </div>
+                  </foreignObject>
+                </g>
+                <!-- Tactical Intel Card for dot1: [Canyon Outlaws] : Forward Scout + Lv 22 -->
+                <g class="anime-callout-item" data-dot="dot1" id="callout_dot1">
+                  <line x1="225" y1="355" x2="210" y2="285" stroke="#8e8874" stroke-width="1.3" stroke-dasharray="3 2" />
+                  <circle cx="210" cy="285" r="2.5" fill="#dfd07c" stroke="#333" stroke-width="0.8" />
+                  <foreignObject x="20" y="260" width="235" height="150" style="overflow: visible;">
+                    <div xmlns="http://www.w3.org/1999/xhtml" class="anime-callout-card" data-dot="dot1">
+                      <div class="card-main-header">
+                        <div class="card-title-text" title="[Canyon Outlaws] : Forward Scout + Lv 22">
+                          <span class="card-faction">[Canyon Outlaws] :</span>
+                          <span class="card-rank">Forward Scout</span>
+                          <span class="card-lvl">+ Lv 22</span>
+                        </div>
+                        <button class="card-dropdown-arrow" title="Toggle Name / Age / Sex / Race">▼</button>
+                      </div>
+                      <div class="card-sub-status">
+                        <span class="status-badge-enemy">● LOOKOUT SQUAD ｜ HOSTILE</span>
+                      </div>
+                      <div class="card-dropdown-content">
+                        <div class="detail-row"><span class="detail-lbl">NAME:</span> <span class="detail-val">Jarek Quickfoot</span></div>
+                        <div class="detail-row"><span class="detail-lbl">AGE:</span> <span class="detail-val">24</span> <span class="detail-lbl" style="margin-left: 6px;">SEX:</span> <span class="detail-val">Male</span></div>
+                        <div class="detail-row"><span class="detail-lbl">RACE:</span> <span class="detail-val">Human (Plains Tribe)</span></div>
+                      </div>
+                    </div>
+                  </foreignObject>
+                </g>
+              </g>
+
+              
+              <!-- White Player Arrow Cursor (Exact match to Anime Screenshot 2) -->
+              <g id="mainPlayerCursor" transform="translate(395, 345) rotate(-22)">
+                <polygon points="0,-15 10,10 0,4 -10,10" fill="#ffffff" stroke="#363226" stroke-width="1.4" filter="url(#animeTerrainShadow)" />
+              </g>
+            </svg>
+          </div>
+
+          <!-- Radar Scan Line (sweeps top-to-bottom on Enemy Detection / Radar, then settles as bottom hazard line) -->
+          <div class="map-radar-scan-line" id="mapScanLine">
+            <div class="map-radar-scan-beam"></div>
+          </div>
+
+          <!-- 2D Toggle Switch in Bottom-Right (Exact match to Screenshot 2) -->
+          <div class="map-2d-toggle" id="map2dToggleBtn" title="Toggle 2D / 3D Isometric View">
+            <span class="map-2d-label" id="map2dLabel">2D</span>
+            <div class="map-2d-switch"></div>
+          </div>
+        </div>
+      </div>
+
     <!-- ==================== BOTTOM HEXAGONAL NAVIGATION DOCK ==================== -->
     <div class="bottom-hud-dock interactive">
       <div class="dock-svg-wrapper">
