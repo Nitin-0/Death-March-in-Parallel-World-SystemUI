@@ -11,6 +11,175 @@
 </head>
 <body>
 
+<svg class="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+<defs>
+  <symbol id="icon-cube" viewBox="0 0 32 32">
+    <path d="M16 3 28 8.4 16 14 4 8.4Z" fill="currentColor"/>
+    <path d="M4 10.3 14.3 15.4 14.3 28.6 4 22.8Z" fill="currentColor" opacity=".92"/>
+    <path d="M17.4 15.4 28 10.3 28 22.8 17.4 28.6Z" fill="currentColor" opacity=".72"/>
+    <path d="m10 5.6 12 5.5" fill="none" stroke="#54574b" stroke-width="1.2" opacity=".65"/>
+  </symbol>
+  <symbol id="icon-chevron" viewBox="0 0 16 16">
+    <path d="m3 5.5 5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="icon-close" viewBox="0 0 16 16">
+    <path d="m4 4 8 8M12 4l-8 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="icon-plus" viewBox="0 0 16 16">
+    <path d="M8 2.5v11M2.5 8h11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="icon-minus" viewBox="0 0 16 16">
+    <path d="M2.5 8h11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="icon-pause" viewBox="0 0 16 16">
+    <path d="M4 3h3v10H4zM10 3h3v10h-3z" fill="currentColor"/>
+  </symbol>
+  <symbol id="icon-play" viewBox="0 0 16 16">
+    <path d="m5 3 8 5-8 5Z" fill="currentColor"/>
+  </symbol>
+
+  <symbol id="i-sword" viewBox="0 0 64 64">
+    <path d="M10 7 20 9 48 38 43 44 15 16Z" fill="#bdced1" stroke="#e4efea" stroke-width="1"/>
+    <path d="m16 11 28 30" stroke="#718e99" stroke-width="1.4"/>
+    <path d="m37 45 12-12" stroke="#d4d6c3" stroke-width="4" stroke-linecap="round"/>
+    <path d="m45 44 10 10" stroke="#8f7956" stroke-width="5" stroke-linecap="round"/>
+    <path d="m51 50 5 5" stroke="#d8c897" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="56" cy="56" r="2.4" fill="#c4b88e"/>
+  </symbol>
+  <symbol id="i-staff" viewBox="0 0 64 64">
+    <path d="M11 55 49 13" stroke="#a9ae85" stroke-width="3" stroke-linecap="round"/>
+    <path d="M13 53 48 15" stroke="#e0d7ac" stroke-width="1"/>
+    <path d="m46 15 5-9 4 7 5 1-6 6" fill="none" stroke="#c8d1b0" stroke-width="2" stroke-linejoin="round"/>
+    <path d="m48 12 7-4-1 7Z" fill="#87c69c"/>
+    <path d="m9 56 5-2-3-3Z" fill="#d4c59a"/>
+  </symbol>
+  <symbol id="i-gun" viewBox="0 0 64 64">
+    <path d="M12 17h30l9 6-5 8H34l-3 15H20l4-16h-12Z" fill="#9a9c98" stroke="#c6c8c0" stroke-width="1"/>
+    <path d="M39 19h14v5H39z" fill="#c0c2bb"/>
+    <path d="M16 21h21v5H16z" fill="#5d625f"/>
+    <path d="m27 31 8 1-4 15H21Z" fill="#666b68"/>
+    <path d="M42 31c-8 0-9 3-9 8" fill="none" stroke="#373c3a" stroke-width="2"/>
+    <circle cx="18" cy="35" r="2" fill="#d2a952"/>
+  </symbol>
+  <symbol id="i-axe" viewBox="0 0 64 64">
+    <path d="m21 15 28 40" stroke="#9b8d72" stroke-width="4" stroke-linecap="round"/>
+    <path d="m23 16 25 37" stroke="#d0c29a" stroke-width="1.2"/>
+    <path d="M12 12 29 8l9 10-7 13-17-4-5-8Z" fill="#aeb8b7" stroke="#d9e0d8" stroke-width="1.2"/>
+    <path d="m29 8 1 15 8 5 7-11-8-7Z" fill="#6d7c80"/>
+    <path d="m47 52 5-3 3 5-5 4Z" fill="#c0b18b"/>
+  </symbol>
+  <symbol id="i-bread" viewBox="0 0 64 64">
+    <path d="M8 38c0-13 12-23 28-22 13 1 21 8 20 18-2 12-18 18-33 16C14 49 8 45 8 38Z" fill="#c8a66a" stroke="#ead29a" stroke-width="1.5"/>
+    <path d="M13 36c5-12 20-17 36-11-8-7-27-8-36 3Z" fill="#e0c187"/>
+    <path d="m22 23 5 8m6-12 5 8m5-5 5 7" stroke="#8e6e45" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M15 44c11 4 27 0 36-8" fill="none" stroke="#a37e4c" stroke-width="2"/>
+  </symbol>
+  <symbol id="i-hat" viewBox="0 0 64 64">
+    <path d="M24 39 35 8l8 13 8 4-6 18Z" fill="#c7c5dc" stroke="#f0edf7" stroke-width="1.2"/>
+    <path d="m35 8 2 24 14-7-8-4Z" fill="#8d82b2"/>
+    <path d="M13 41c8-5 28-5 40 2 4 3 0 7-7 8-13 3-30 0-35-4-3-2-2-4 2-6Z" fill="#d9d5e7" stroke="#f4f1fa" stroke-width="1"/>
+    <path d="M24 36c7 3 15 4 23 2l-2 6c-8 2-15 1-23-2Z" fill="#76658e"/>
+    <path d="m42 18 7 5" stroke="#eee9ff" stroke-width="2"/>
+  </symbol>
+  <symbol id="i-crossed" viewBox="0 0 64 64">
+    <path d="m14 10 37 40" stroke="#d7dbe0" stroke-width="4" stroke-linecap="round"/>
+    <path d="m50 10-37 40" stroke="#c8c6d8" stroke-width="4" stroke-linecap="round"/>
+    <path d="m12 9 7 2 34 35-4 5Z" fill="#a9bac4" opacity=".65"/>
+    <path d="m52 9-7 2-34 35 4 5Z" fill="#b5a9bd" opacity=".6"/>
+    <path d="m40 43 10-9M14 43l10 9" stroke="#cf9a91" stroke-width="3"/>
+    <path d="m48 47 7 8m-39-8-7 8" stroke="#a18a68" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="32" cy="32" r="3" fill="#7b3345"/>
+  </symbol>
+  <symbol id="i-hp" viewBox="0 0 64 64">
+    <path d="M25 8h15v10H25z" fill="#b8b9a2" stroke="#e0dfc9"/>
+    <path d="M22 18h21l5 10v24c0 4-4 6-8 6H23c-5 0-8-3-8-7V28Z" fill="#bbc0a8" stroke="#e4e4ce" stroke-width="1.4"/>
+    <path d="M17 33h29v18c0 3-3 5-7 5H23c-4 0-6-2-6-5Z" fill="#8eaa4e"/>
+    <path d="M21 23h7v26h-7z" fill="#e7edd3" opacity=".55"/>
+    <path d="M21 18h24v7H21z" fill="#666e5d"/>
+    <path d="M29 36h7v5h5v7h-5v5h-7v-5h-5v-7h5Z" fill="#e6e3bf" opacity=".85"/>
+  </symbol>
+  <symbol id="i-necklace" viewBox="0 0 64 64">
+    <circle cx="32" cy="27" r="20" fill="none" stroke="#d8d7df" stroke-width="2.4" stroke-dasharray="1.2 4" stroke-linecap="round"/>
+    <path d="M32 43v6" stroke="#c9c4cf" stroke-width="2"/>
+    <path d="m32 46 8 6-8 8-8-8Z" fill="#c6ac81" stroke="#eee1bd" stroke-width="1.2"/>
+    <path d="m32 48 3 5-3 4-3-4Z" fill="#e8d6a5"/>
+  </symbol>
+  <symbol id="i-barrel" viewBox="0 0 64 64">
+    <path d="M18 11c8-3 20-3 28 0l3 42c-9 4-25 4-34 0Z" fill="#9f8764" stroke="#d3bb8e" stroke-width="1.4"/>
+    <ellipse cx="32" cy="12" rx="14" ry="5" fill="#c0a47a" stroke="#dbc398"/>
+    <path d="M16 21c10 3 22 3 32 0M15 43c11 3 23 3 34 0" fill="none" stroke="#575b55" stroke-width="4"/>
+    <path d="M25 15v37M39 15v37" stroke="#725e45" stroke-width="1.4"/>
+    <ellipse cx="32" cy="12" rx="4" ry="1.5" fill="#6a5d49"/>
+  </symbol>
+  <symbol id="i-lyre" viewBox="0 0 64 64">
+    <path d="M17 11c-4 14-3 27 6 37l9 8 9-8c9-10 10-23 6-37l-6 3c3 12 1 24-9 31-10-7-12-19-9-31Z" fill="#b4af87" stroke="#e1dbb2" stroke-width="1.4"/>
+    <path d="M21 17h22M19 43c8 4 18 4 26 0" stroke="#dbd4a8" stroke-width="3"/>
+    <path d="M25 18v25m5-25v29m5-29v29m5-29v25" stroke="#ebe7ce" stroke-width="1"/>
+    <path d="m25 54 7 5 7-5" fill="none" stroke="#827d5f" stroke-width="2"/>
+  </symbol>
+  <symbol id="i-robe" viewBox="0 0 64 64">
+    <path d="m25 10 7 5 7-5 8 6 9 17-8 5-5-9 3 27H18l3-27-5 9-8-5 9-17Z" fill="#e6dce5" stroke="#fff4fb" stroke-width="1.2"/>
+    <path d="m25 10 7 5-5 12-6-14Zm14 0-7 5 5 12 6-14Z" fill="#f5edf2"/>
+    <path d="m32 15-4 12 4 7 4-7Z" fill="#b77b9d"/>
+    <path d="M32 32v23M23 39l-2 16m20-16 2 16" stroke="#b59bad" stroke-width="1.4"/>
+    <path d="M20 28h24" stroke="#9e6b8e" stroke-width="3"/>
+    <path d="m9 32 8 4m38-4-8 4" stroke="#c796b2" stroke-width="2"/>
+  </symbol>
+  <symbol id="i-club" viewBox="0 0 64 64">
+    <path d="M16 54c-3-2-3-5-1-8L40 10c3-5 8-6 12-3 5 3 5 8 2 13L25 51c-3 4-6 5-9 3Z" fill="#bda47d" stroke="#e0c9a0" stroke-width="1.3"/>
+    <path d="m22 45 24-32" stroke="#806748" stroke-width="2"/>
+    <path d="m42 12 8 5m-13 3 8 6m-14 2 8 6" stroke="#dac296" stroke-width="1.5"/>
+    <path d="m14 48 10 6" stroke="#6c5741" stroke-width="4"/>
+  </symbol>
+  <symbol id="i-cheese" viewBox="0 0 64 64">
+    <path d="m9 40 30-25 16 8-2 28-39 5Z" fill="#d7c65f" stroke="#f0e58d" stroke-width="1.3"/>
+    <path d="m9 40 30-25 16 8-31 23Z" fill="#eee080"/>
+    <path d="m24 46 31-23-2 28-39 5Z" fill="#baa846"/>
+    <circle cx="36" cy="43" r="4" fill="#8f8b3d"/>
+    <circle cx="45" cy="32" r="2.5" fill="#a29a43"/>
+    <circle cx="24" cy="34" r="3" fill="#c0ae50"/>
+    <circle cx="20" cy="51" r="2" fill="#8f8b3d"/>
+  </symbol>
+  <symbol id="i-boots" viewBox="0 0 64 64">
+    <path d="M13 11h16l-2 27 8 8-3 10H9L8 46l7-8Z" fill="#aab2b2" stroke="#dbe0da" stroke-width="1.2"/>
+    <path d="M38 8h14l-1 28 6 8-3 10H33l-1-9 7-9Z" fill="#878f94" stroke="#cbd2d0" stroke-width="1.2"/>
+    <path d="M12 45h18m5-3h19" stroke="#555d62" stroke-width="4"/>
+    <path d="M15 18h12m-13 7h12m14-10h11m-11 7h11" stroke="#d1d4ca" stroke-width="2"/>
+    <path d="M10 53h23m1-2h21" stroke="#d5d3bd" stroke-width="2"/>
+  </symbol>
+  <symbol id="i-gauntlet" viewBox="0 0 64 64">
+    <path d="m20 27-5-12 5-3 7 13-1-17 6-1 4 17 2-16 6 1 1 18 4-12 5 2-3 23-11 15-17-5-8-16Z" fill="#b58cae" stroke="#e5c4df" stroke-width="1.2"/>
+    <path d="m24 42 23 5-5 11-21-6Z" fill="#806683"/>
+    <path d="m28 29 17 4m-19 3 18 4" stroke="#765c7b" stroke-width="2"/>
+    <path d="M25 12v12m9-14 1 14m8-12-1 14" stroke="#ead4e5" stroke-width="1.3"/>
+  </symbol>
+  <symbol id="i-mana" viewBox="0 0 64 64">
+    <path d="M25 7h14v12H25z" fill="#c5c9c4" stroke="#eef1e8"/>
+    <path d="M25 18c-2 7-14 12-14 25 0 11 9 16 21 16s21-5 21-16c0-13-12-18-14-25Z" fill="#bfcbd0" stroke="#ecf4f1" stroke-width="1.4"/>
+    <path d="M15 38c10 4 24 4 34 0 3 15-3 19-17 19S12 53 15 38Z" fill="#4d7cb4"/>
+    <path d="M22 26c-5 5-7 10-6 16" fill="none" stroke="#f2f5ef" stroke-width="4" opacity=".55" stroke-linecap="round"/>
+    <path d="M24 18h16" stroke="#626b70" stroke-width="4"/>
+    <circle cx="38" cy="45" r="4" fill="#8fb9e0" opacity=".7"/>
+  </symbol>
+  <symbol id="i-backpack" viewBox="0 0 64 64">
+    <path d="M20 17c0-12 24-12 24 0" fill="none" stroke="#e5e2cd" stroke-width="4"/>
+    <path d="M15 20c8-5 26-5 34 0l5 33c-11 6-33 6-44 0Z" fill="#dad9c5" stroke="#f4f1dc" stroke-width="1.4"/>
+    <path d="M14 29c-7 4-7 18 0 22m36-22c7 4 7 18 0 22" fill="none" stroke="#b7b9a7" stroke-width="3"/>
+    <path d="M22 36h20v19H22z" fill="#b9bba9" stroke="#ece9d4"/>
+    <path d="M18 23c8 4 20 4 28 0M32 37v17" stroke="#8f9587" stroke-width="2"/>
+    <circle cx="32" cy="42" r="2" fill="#e4d797"/>
+  </symbol>
+  <symbol id="i-shield" viewBox="0 0 64 64">
+    <path d="M17 8h30l3 28c-1 12-9 18-18 22-9-4-17-10-18-22Z" fill="#a6acaa" stroke="#e0e3d9" stroke-width="1.5"/>
+    <path d="M22 13h20l2 22c-1 8-5 13-12 17-7-4-11-9-12-17Z" fill="#737e80"/>
+    <path d="M32 13v38M20 29h25" stroke="#c7cbc2" stroke-width="3"/>
+    <path d="M24 16h5v11h-6z" fill="#e1e2d5" opacity=".45"/>
+    <circle cx="32" cy="29" r="4" fill="#d0cbaa"/>
+  </symbol>
+</defs>
+</svg>
+
+
   <!-- BACKGROUND PURPLE MIASMA CLOUDS (Exact visual match to Episode 1 scene) -->
   <div class="world-bg">
     <canvas id="miasmaCanvas" class="clouds-canvas"></canvas>
@@ -688,7 +857,221 @@
         </div>
       </div>
 
-    <!-- ==================== BOTTOM HEXAGONAL NAVIGATION DOCK ==================== -->
+    
+      <!-- ==========================================================
+            EXACT REPLICA OF STORAGE & EQUIPMENT SYSTEM
+            (Imported from index3.html & anime reference)
+            ========================================================== -->
+<div class="hud-window-wrapper storage-hud-wrapper interactive hidden" id="hudWindowWrapper" style="display: none;">
+      <section class="equipment-panel" id="equipmentPanel" aria-label="Equipment">
+        <div class="equipment-inner">
+          <div class="equipment-title">EQUIPMENT</div>
+
+          <!-- Top Arch: 6 Symmetrical Hex Slots -->
+          <button class="hex-slot slot-top-1" data-slot="back" data-slot-name="Back / Bag" data-accept="back" aria-label="Back Slot"><span class="hex-inner"></span></button>
+          <button class="hex-slot slot-top-2" data-slot="body" data-slot-name="Body" data-accept="body" aria-label="Body Slot"><span class="hex-inner"></span></button>
+          <button class="hex-slot slot-top-3" data-slot="head" data-slot-name="Head" data-accept="head" aria-label="Head Slot"><span class="hex-inner"></span></button>
+          <button class="hex-slot slot-top-4" data-slot="main" data-slot-name="Main Hand" data-accept="weapon" aria-label="Main Hand Slot"><span class="hex-inner"></span></button>
+          <button class="hex-slot slot-top-5" data-slot="offhand" data-slot-name="Off Hand" data-accept="offhand,shield,weapon" aria-label="Off Hand Slot"><span class="hex-inner"></span></button>
+          <button class="hex-slot slot-top-6" data-slot="sub" data-slot-name="Sub Weapon" data-accept="weapon,shield" aria-label="Sub Weapon Slot"><span class="hex-inner"></span></button>
+
+          <!-- Bottom Arch: 6 Symmetrical Hex Slots -->
+          <button class="hex-slot slot-bot-1" data-slot="feet" data-slot-name="Feet" data-accept="feet" aria-label="Feet Slot"><span class="hex-inner"></span></button>
+          <button class="hex-slot slot-bot-2" data-slot="legs" data-slot-name="Legs" data-accept="legs,feet" aria-label="Legs Slot"><span class="hex-inner"></span></button>
+          <button class="hex-slot slot-bot-3" data-slot="waist" data-slot-name="Waist" data-accept="waist,accessory" aria-label="Waist Slot"><span class="hex-inner"></span></button>
+          <button class="hex-slot slot-bot-4" data-slot="acc1" data-slot-name="Accessory 1" data-accept="accessory" aria-label="Accessory 1 Slot"><span class="hex-inner"></span></button>
+          <button class="hex-slot slot-bot-5" data-slot="acc2" data-slot-name="Accessory 2" data-accept="accessory" aria-label="Accessory 2 Slot"><span class="hex-inner"></span></button>
+          <button class="hex-slot slot-bot-6" data-slot="hands" data-slot-name="Hands" data-accept="hands" aria-label="Hands Slot"><span class="hex-inner"></span></button>
+
+          <svg class="silhouette" viewBox="0 0 130 310" aria-hidden="true">
+            <defs>
+              <!-- Half Body Silhouette (Right Half x >= 65, mirrored across center x=65 for 100% exact symmetry) -->
+              <g id="mannequin-half">
+                <!-- Head -->
+                <path d="M65 3 C75 3 80 9 82 20 L82 26 C85 28 84 33 81 34 C79 42 73 47 65 48 Z"/>
+                <!-- Neck -->
+                <path d="M65 44 L74 44 C77 58 74 62 65 63 Z"/>
+                <!-- Torso -->
+                <path d="M65 51 C75 51 84 54 93 58 L99 65 L94 87 L92 137 L95 160 C85 167 75 167 65 167 Z"/>
+                <!-- Arm (Hands on hips) -->
+                <path d="M97 61 C105 65 108 74 112 85 L119 108 C122 116 119 126 116 134 L106 156 C102 164 96 168 91 163 L88 156 L97 140 L103 125 L105 116 L96 94 L89 74 Z"/>
+                <!-- Leg & Foot -->
+                <path d="M65 167 L95 160 L94 151 L96 185 L95 218 L100 275 L102 286 L112 292 C120 298 112 303 103 302 L84 301 C77 300 75 295 80 289 L84 283 L79 249 L75 215 L69 177 L65 177 Z"/>
+              </g>
+              <!-- Symmetrical Inner Arm Joint Highlight -->
+              <path id="mannequin-highlight" d="M96 91 L102 113 L100 128 L94 145 L91 153 L94 157 L102 143 L108 123 L105 108 Z"/>
+            </defs>
+
+            <!-- Base Mannequin Body (Right half + Scaled Mirrored Left half) -->
+            <g fill="#55584f">
+              <use href="#mannequin-half" />
+              <use href="#mannequin-half" transform="translate(130, 0) scale(-1, 1)" />
+            </g>
+            <!-- Inner Highlights (Right half + Scaled Mirrored Left half) -->
+            <g fill="#d7d5b5" opacity="0.92">
+              <use href="#mannequin-highlight" />
+              <use href="#mannequin-highlight" transform="translate(130, 0) scale(-1, 1)" />
+            </g>
+          </svg>
+        </div>
+      </section>
+
+      <section class="storage-wrap" id="storageWrap" aria-label="Storage">
+        <div class="window-top-hat storage-tab" id="storageDragHandle">
+          <button class="hat-title-tab tab-label" id="storageTab" aria-label="Open Storage">STORAGE</button>
+          <button class="hat-close-btn tab-close" id="closeStorage" aria-label="Close Storage" title="Close Window">×</button>
+        </div>
+
+        <div class="storage-window" id="storageWindow">
+          <div class="top-gold-rule"></div>
+          <div class="window-titlebar">
+            <button class="window-control minimize" id="minimizeStorage" aria-label="Minimize Storage" aria-expanded="true" title="Minimize">
+              <svg viewBox="0 0 16 16"><use id="minimizeIcon" href="#icon-pause"></use></svg>
+            </button>
+            <button class="window-control expand" id="expandCategories" aria-label="Expand All Categories" title="Expand All">
+              <svg viewBox="0 0 16 16"><use id="expandIcon" href="#icon-plus"></use></svg>
+            </button>
+          </div>
+
+          <div class="storage-content" id="storageContent">
+            <section class="inventory-panel" aria-label="Item Inventory">
+              <header class="inventory-header">
+                <div class="all-items-wrap">
+                  <button class="all-items-btn" id="allItemsButton" aria-haspopup="menu" aria-expanded="false">
+                    <svg class="cube-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#icon-cube"></use></svg>
+                    <span id="categoryTitle">ALL ITEMS</span>
+                    <svg class="dropdown-caret" viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-chevron"></use></svg>
+                  </button>
+                  <div class="all-items-menu" id="allItemsMenu" role="menu" hidden>
+                    <button class="all-menu-option active" role="menuitem" data-filter="all">
+                      <svg class="cube-icon" viewBox="0 0 32 32"><use href="#icon-cube"></use></svg>
+                      ALL ITEMS
+                    </button>
+                    <button class="all-menu-option" role="menuitem" data-filter="1">
+                      <svg class="cube-icon" viewBox="0 0 32 32"><use href="#icon-cube"></use></svg>
+                      ITEM CATEGORY 1
+                    </button>
+                    <button class="all-menu-option" role="menuitem" data-filter="2">
+                      <svg class="cube-icon" viewBox="0 0 32 32"><use href="#icon-cube"></use></svg>
+                      ITEM CATEGORY 2
+                    </button>
+                    <button class="all-menu-option" role="menuitem" data-filter="3">
+                      <svg class="cube-icon" viewBox="0 0 32 32"><use href="#icon-cube"></use></svg>
+                      ITEM CATEGORY 3
+                    </button>
+                  </div>
+                </div>
+                <div class="selected-name" id="selectedName">Magic Robe</div>
+              </header>
+              <div class="item-grid" id="itemGrid" role="grid" aria-label="Inventory Items"></div>
+            </section>
+
+            <div class="category-list" id="categoryList">
+              <div class="category-group" data-category="1">
+                <button class="category-button" aria-expanded="false" aria-controls="categoryDropdown1">
+                  <svg class="cube-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#icon-cube"></use></svg>
+                  <span>ITEM CATEGORY 1</span>
+                  <svg class="category-chevron" viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-chevron"></use></svg>
+                </button>
+                <div class="category-dropdown" id="categoryDropdown1" aria-hidden="true">
+                  <div class="dropdown-clip"><div class="dropdown-inner"></div></div>
+                </div>
+              </div>
+              <div class="category-group" data-category="2">
+                <button class="category-button" aria-expanded="false" aria-controls="categoryDropdown2">
+                  <svg class="cube-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#icon-cube"></use></svg>
+                  <span>ITEM CATEGORY 2</span>
+                  <svg class="category-chevron" viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-chevron"></use></svg>
+                </button>
+                <div class="category-dropdown" id="categoryDropdown2" aria-hidden="true">
+                  <div class="dropdown-clip"><div class="dropdown-inner"></div></div>
+                </div>
+              </div>
+              <div class="category-group" data-category="3">
+                <button class="category-button" aria-expanded="false" aria-controls="categoryDropdown3">
+                  <svg class="cube-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#icon-cube"></use></svg>
+                  <span>ITEM CATEGORY 3</span>
+                  <svg class="category-chevron" viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-chevron"></use></svg>
+                </button>
+                <div class="category-dropdown" id="categoryDropdown3" aria-hidden="true">
+                  <div class="dropdown-clip"><div class="dropdown-inner"></div></div>
+                </div>
+              </div>
+            </div>
+
+            </div>
+
+          <!-- Bottom Currency Bar (Pinned at bottom of storage window) -->
+          <div class="storage-currency-bar">
+            <div class="currency-tag-wrap">
+              <span class="currency-tag">Currency</span>
+              <span class="currency-kingdom">Siga Kingdom</span>
+            </div>
+            <div class="currency-val-wrap">
+              <svg class="currency-coin" viewBox="0 0 20 20">
+                <circle cx="10" cy="10" r="8" fill="#dfd07c" stroke="#8a7c38" stroke-width="1.2"/>
+                <circle cx="10" cy="10" r="5" fill="#f5e8a3" opacity="0.8"/>
+              </svg>
+              <span class="currency-number">513,029,014</span>
+              <span class="currency-arrow">▼</span>
+            </div>
+          </div>
+        </div>
+      </section>
+      </div><!-- /.hud-window-wrapper -->
+
+      <!-- Tooltip & Notification elements for Storage / Inventory -->
+      <div class="item-tooltip" id="itemTooltip" role="tooltip" hidden></div>
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+      <div class="sr-only" id="liveRegion" aria-live="polite"></div>
+      <button class="reopen-hud-btn" id="reopenHudBtn" hidden title="Reopen Equipment & Storage"></button>
+
+<!-- Slot Equipment Selector Modal (Image 1 Exact Replica) -->
+      <div class="slot-equip-modal" id="slotEquipModal" hidden>
+        <div class="slot-modal-card">
+          <div class="slot-modal-header">
+            <span class="slot-modal-title" id="slotModalTitle">Equipment Selection</span>
+            <button class="slot-modal-close" id="closeSlotModal" title="Close">×</button>
+          </div>
+          <div class="slot-modal-body" id="slotModalBody"></div>
+        </div>
+      </div>
+
+      <!-- Anime Item Detail Modal (Image 3 Exact Replica) -->
+      <div class="item-detail-modal" id="itemDetailModal" hidden>
+        <div class="detail-card">
+          <div class="detail-top-row">
+            <div class="detail-left-group">
+              <div class="detail-item-tile" id="detailIconTile">
+                <svg id="detailIconSvg" viewBox="0 0 64 64"><use href="#i-necklace"></use></svg>
+              </div>
+              <div class="detail-title-col">
+                <div class="detail-name" id="detailName">Silver Necklace</div>
+                <div class="detail-rarity-tag" id="detailRarity">Uncommon</div>
+              </div>
+            </div>
+            <button class="detail-close-btn" id="closeDetailModal" title="Close">✕</button>
+          </div>
+
+          <div class="detail-type-line" id="detailTypeLine">Armor • Equipment Slot: Accessory</div>
+          <div class="detail-badges" id="detailBadges">
+            <span class="stat-badge">Magic +10</span>
+          </div>
+
+          <div class="detail-divider"></div>
+
+          <div class="detail-desc" id="detailDesc">A faintly glowing silver necklace.</div>
+
+          <div class="detail-actions-row">
+            <button class="detail-equip-btn" id="detailPrimaryBtn">Equip</button>
+            <button class="detail-discard-btn" id="detailDropBtn">Discard</button>
+            <button class="detail-close-action-btn" id="detailCloseActionBtn">Close</button>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ==================== BOTTOM HEXAGONAL NAVIGATION DOCK ==================== -->
     <div class="bottom-hud-dock interactive">
       <div class="dock-svg-wrapper">
 

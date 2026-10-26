@@ -319,16 +319,10 @@ function renderPanelView(viewType) {
         return;
     } else if (viewType === 'storage') {
         setActiveRightHex('storage');
-        winHeaderTitle.textContent = 'STORAGE';
-        winSubnav.innerHTML = `<div class="subnav-tab active">STORAGE</div><div class="subnav-tab">EQUIPMENT</div>`;
-        dynamicBody.innerHTML = `
-        <div class="custom-scroll">
-          <div class="skill-item"><span>Casual Wear (Hoodie & Jeans)</span><span style="color:#a8e090;">E</span></div>
-          <div class="skill-item"><span>Dragon God Fang & Scale Materials</span><span style="font-family:Rajdhani;">×999</span></div>
-          <div class="skill-item"><span>Holy Sword Durandal</span><span style="font-family:Rajdhani;">×1</span></div>
-          <div class="skill-item"><span>Gold & Platinum Coins</span><span style="font-family:Rajdhani;">×14,500,000</span></div>
-        </div>
-      `;
+        if (typeof window.toggleStorageWindow === 'function') {
+            window.toggleStorageWindow();
+        }
+        return;
     } else if (viewType === 'journal') {
         setActiveRightHex('journal');
         winHeaderTitle.textContent = 'QUESTS & LORE';
@@ -1478,3 +1472,911 @@ window.addEventListener('mousemove', (e) => {
 });
 
 window.addEventListener('mouseup', () => { isPanningMap = false; });
+
+
+/* ============================================================
+   INTEGRATED STORAGE & EQUIPMENT CONTROLLER
+   ============================================================ */
+(function initStorageSystem() {
+
+  "use strict";
+
+  let items = [
+    {id:"longsword",name:"Longsword",sub:"Tempered Steel Longsword",rarity:"COMMON",weight:"2.5 kg",icon:"sword",tone:"blue",cat:1,kind:"weapon",type:"Weapon • Sword",qty:1,desc:"A sturdy longsword forged from tempered steel. Balanced and reliable for knightly combat.",stat:"ATK +12"},
+    {id:"staff",name:"Mage's Staff",sub:"Ancient Focus Staff",rarity:"RARE",weight:"1.8 kg",icon:"staff",tone:"green",cat:1,kind:"weapon",type:"Weapon • Staff",qty:1,desc:"An ancient wooden staff that channels and stabilizes magical energy for high-tier incantations.",stat:"Magic ATK +10, Cast Speed +4"},
+    {id:"magicgun",name:"Magic Gun",sub:"Magic Handgun",rarity:"UNIQUE",weight:"1.2 kg",icon:"gun",tone:"magenta",cat:1,kind:"weapon",type:"Weapon • Gun",qty:1,desc:"An unusual magic-powered firearm. A small crystal in the grip acts as its power source.",stat:"ATK +240, MAG +45"},
+    {id:"battleaxe",name:"Battleaxe",sub:"Heavy War Axe",rarity:"UNCOMMON",weight:"4.2 kg",icon:"axe",tone:"navy",cat:1,kind:"weapon",type:"Weapon • Axe",qty:1,desc:"A heavy double-edged war axe capable of crushing heavy plate armor with brute force.",stat:"ATK +21"},
+    {id:"bread",name:"Hard Bread",sub:"Travel Rations",rarity:"COMMON",weight:"0.4 kg",icon:"bread",tone:"green",cat:2,kind:"consumable",type:"Consumable • Food",qty:8,desc:"Durable travel bread with a long shelf life. Satisfies hunger on long expeditions.",stat:"Restores Hunger"},
+    {id:"magichat",name:"Wizard's Hat",sub:"Pointed Archmage Hat",rarity:"RARE",weight:"0.3 kg",icon:"hat",tone:"olive",cat:1,kind:"head",type:"Armor • Head",qty:1,desc:"A pointed hat woven with enchanted silk that shields the caster's mind and accelerates mana recovery.",stat:"Magic +8, DEF +3"},
+    {id:"dualblades",name:"Twin Daggers",sub:"Matched Agile Blades",rarity:"UNCOMMON",weight:"1.1 kg",icon:"crossed",tone:"navy",cat:1,kind:"weapon",type:"Weapon • Dual Blades",qty:1,desc:"A matched pair of light, agile daggers designed for rapid continuous slashes.",stat:"ATK Speed +7, ATK +8"},
+    {id:"hppotion",name:"Health Potion",sub:"Herbal Vitality Elixir",rarity:"COMMON",weight:"0.5 kg",icon:"hp",tone:"olive",cat:2,kind:"consumable",type:"Consumable • Potion",qty:12,desc:"A herbal potion brewed with healing roots that swiftly closes wounds and restores vitality.",stat:"Restores HP"},
+    {id:"necklace",name:"Silver Necklace",sub:"Star Amber Pendant",rarity:"RARE",weight:"0.1 kg",icon:"necklace",tone:"violet",cat:3,kind:"accessory",type:"Accessory",qty:1,desc:"A fine silver chain adorned with an amber jewel that calms the wearer's thoughts.",stat:"Spirit +4, MAG +6"},
+    {id:"barrel",name:"Storage Cask",sub:"Oak Ration Barrel",rarity:"COMMON",weight:"3.0 kg",icon:"barrel",tone:"violet",cat:3,kind:"misc",type:"Misc • Container",qty:2,desc:"A sturdy wooden cask fitted with airtight iron hoops, ideal for preserving rations.",stat:"Capacity 30"},
+    {id:"shortblades",name:"Crossed Daggers",sub:"Close Quarters Blades",rarity:"COMMON",weight:"0.9 kg",icon:"crossed",tone:"navy",cat:1,kind:"weapon",type:"Weapon • Daggers",qty:1,desc:"Two compact blades tailored for close-quarters agility and stealthy strikes.",stat:"ATK +9"},
+    {id:"lyre",name:"Ancient Lyre",sub:"Harp of Echoes",rarity:"EPIC",weight:"1.5 kg",icon:"lyre",tone:"olive",cat:3,kind:"misc",type:"Misc • Instrument",qty:1,desc:"A classical string instrument that yields pure, crystal tones said to resonate with spirits.",stat:"Appraisal Target"},
+    {id:"magicrobe",name:"Magic Robe",sub:"Sanctified White Robe",rarity:"RARE",weight:"1.4 kg",icon:"robe",tone:"violet",cat:1,kind:"body",type:"Armor • Body",qty:1,desc:"A clean white robe lined with warding runes that deflects offensive incantations.",stat:"DEF +9, Magic +6"},
+    {id:"club",name:"Wooden Club",sub:"Carved Hardwood Club",rarity:"COMMON",weight:"2.0 kg",icon:"club",tone:"brown",cat:1,kind:"weapon",type:"Weapon • Club",qty:1,desc:"A solid hardwood club carved for bludgeoning adversaries.",stat:"ATK +6"},
+    {id:"cheese",name:"Aged Cheese",sub:"Fermented Mountain Cheese",rarity:"COMMON",weight:"0.6 kg",icon:"cheese",tone:"green",cat:2,kind:"consumable",type:"Consumable • Food",qty:5,desc:"A rich, savory block of preserved mountain cheese with high nutritional value.",stat:"Restores Hunger"},
+    {id:"boots",name:"Leather Boots",sub:"Reinforced Travel Boots",rarity:"COMMON",weight:"1.2 kg",icon:"boots",tone:"blue",cat:1,kind:"feet",type:"Armor • Feet",qty:1,desc:"Rugged leather boots crafted with double stitching for enduring difficult mountain terrain.",stat:"DEF +4, Agility +2"},
+    {id:"gauntlet",name:"Mana Gloves",sub:"Precision Spellcaster Gloves",rarity:"RARE",weight:"0.4 kg",icon:"gauntlet",tone:"green",cat:1,kind:"hands",type:"Armor • Hands",qty:1,desc:"Supple enchanted gloves enhancing fine magical motor control and reducing incantation delay.",stat:"Cast Speed +5, Magic +4"},
+    {id:"manapotion",name:"Mana Potion",sub:"Crystalline Mana Draught",rarity:"UNCOMMON",weight:"0.5 kg",icon:"mana",tone:"blue",cat:2,kind:"consumable",type:"Consumable • Potion",qty:9,desc:"A radiant blue elixir that rapidly replenishes depleted spiritual and magical reserves.",stat:"Restores MP"},
+    {id:"backpack",name:"Traveler's Pack",sub:"Large Adventurer Rucksack",rarity:"UNCOMMON",weight:"2.2 kg",icon:"backpack",tone:"olive",cat:3,kind:"back",type:"Armor • Back",qty:1,desc:"A reinforced leather rucksack outfitted with multiple quick-access pouches and bedroll straps.",stat:"Carry Weight +20"},
+    {id:"shield",name:"Iron Shield",sub:"Heater Shield of Defiance",rarity:"RARE",weight:"3.8 kg",icon:"shield",tone:"violet",cat:1,kind:"offhand",type:"Armor • Shield",qty:1,desc:"A medium heater shield forged with tempered iron plating capable of deflecting fierce strikes.",stat:"DEF +14, Block +10%"},
+    {id:"crossed swords",name:"Crimson Twin Blades",sub:"Scarlet Fang Dual Swords",rarity:"UNIQUE",weight:"2.0 kg",icon:"crossed",tone:"navy",cat:1,kind:"weapon",type:"Weapon • Dual Blades",qty:1,desc:"Twin mastercrafted swords wrapped in scarlet hilt bindings with high critical potential.",stat:"ATK +15, Crit +12%"}
+  ];
+
+  const itemGrid = document.getElementById("itemGrid");
+  const selectedName = document.getElementById("selectedName");
+  const categoryTitle = document.getElementById("categoryTitle");
+  const categoryList = document.getElementById("categoryList");
+  const allItemsButton = document.getElementById("allItemsButton");
+  const allItemsMenu = document.getElementById("allItemsMenu");
+  const storageWrap = document.getElementById("storageWrap");
+  const storageWindow = document.getElementById("storageWindow");
+  const storageContent = document.getElementById("storageContent");
+  const storageTab = document.getElementById("storageTab");
+  const closeStorage = document.getElementById("closeStorage");
+  const minimizeStorage = document.getElementById("minimizeStorage");
+  const expandCategories = document.getElementById("expandCategories");
+  const tooltip = document.getElementById("itemTooltip");
+  const toast = document.getElementById("toast");
+  const liveRegion = document.getElementById("liveRegion");
+  const hudCanvas = document.getElementById("hudCanvas") || document.getElementById("hudWindowWrapper");
+  const hudWindow = document.getElementById("hudWindowWrapper");
+  const hudWindowWrapper = hudWindow;
+  const reopenBtn = document.getElementById("reopenHudBtn");
+  const equipmentSlots = Array.from(document.querySelectorAll("#equipmentPanel .hex-slot"));
+  const categoryGroups = Array.from(document.querySelectorAll(".category-group"));
+
+  let selectedId = "magicrobe";
+  let armedId = null;
+  let currentFilter = "all";
+  let storageClosed = false;
+  let minimized = false;
+  let toastTimer = null;
+  const equipped = {};
+
+  function getItem(id){
+    return items.find(item => item.id === id) || null;
+  }
+
+  function iconMarkup(item, className){
+    return '<svg class="' + className + '" viewBox="0 0 64 64" aria-hidden="true"><use href="#i-' + item.icon + '"></use></svg>';
+  }
+
+  function visibleItems(){
+    return currentFilter === "all" ? items.slice() : items.filter(item => String(item.cat) === currentFilter);
+  }
+
+  function renderGrid(){
+    const visible = visibleItems();
+    const cells = visible.slice(0,21);
+    while(cells.length < 21) cells.push(null);
+    itemGrid.innerHTML = "";
+
+    cells.forEach(item => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.setAttribute("role","gridcell");
+
+      if(!item){
+        button.className = "item-slot empty";
+        button.disabled = true;
+        button.tabIndex = -1;
+        button.setAttribute("aria-hidden","true");
+        button.innerHTML = '<span class="item-surface"></span>';
+        itemGrid.appendChild(button);
+        return;
+      }
+
+      button.className = "item-slot tone-" + item.tone + (item.id === selectedId ? " is-selected" : "");
+      button.dataset.id = item.id;
+      button.draggable = true;
+      button.setAttribute("aria-label", item.name + " (" + item.type + "), Quantity: " + item.qty);
+      button.setAttribute("aria-selected",item.id === selectedId ? "true" : "false");
+      button.innerHTML = '<span class="item-surface">' + iconMarkup(item,"item-art") + "</span>";
+
+      button.addEventListener("click",() => selectItem(item.id,true));
+      button.addEventListener("dblclick",() => quickUseOrEquip(item.id));
+      button.addEventListener("pointerenter",() => showItemTooltip(item,button));
+      button.addEventListener("pointerleave",hideTooltip);
+      button.addEventListener("focus",() => showItemTooltip(item,button));
+      button.addEventListener("blur",hideTooltip);
+      button.addEventListener("dragstart",event => {
+        event.dataTransfer.effectAllowed = "copy";
+        event.dataTransfer.setData("text/plain",item.id);
+        selectItem(item.id,true);
+      });
+      button.addEventListener("dragend",() => {
+        equipmentSlots.forEach(slot => slot.classList.remove("drag-over"));
+        if(armedId === item.id){
+          armedId = null;
+          updateSlotHints();
+        }
+      });
+
+      itemGrid.appendChild(button);
+    });
+    updateSelectedHeader();
+  }
+
+  function getItemSubtype(item){
+    if(item.kind === "weapon"){
+      if(item.id.includes("sword") || item.id === "longsword") return "Sword";
+      if(item.id.includes("staff")) return "Staff";
+      if(item.id.includes("axe")) return "Axe";
+      if(item.id.includes("gun")) return "Gun";
+      if(item.id.includes("club")) return "Club";
+      if(item.id.includes("blades") || item.id.includes("blade")) return "Dual Blades";
+      return "Weapon";
+    }
+    if(item.kind === "body") return "Robe";
+    if(item.kind === "head") return "Hat";
+    if(item.kind === "feet") return "Boots";
+    if(item.kind === "hands") return "Gloves";
+    if(item.kind === "back") return "Pack";
+    if(item.kind === "offhand") return "Shield";
+    if(item.kind === "consumable"){
+      if(item.id.includes("potion")) return "Potion";
+      return "Food";
+    }
+    if(item.kind === "accessory") return "Accessory";
+    if(item.kind === "misc"){
+      if(item.id === "lyre") return "Instrument";
+      if(item.id === "barrel") return "Container";
+      return "Misc";
+    }
+    return item.type.split("•")[1] ? item.type.split("•")[1].trim() : item.type;
+  }
+
+  function renderCategoryMenus(){
+    categoryGroups.forEach(group => {
+      const category = group.dataset.category;
+      const container = group.querySelector(".dropdown-inner");
+      const categoryItems = items.filter(item => String(item.cat) === category);
+      container.innerHTML = "";
+      categoryItems.forEach(item => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "dropdown-item" + (item.id === selectedId ? " is-selected" : "");
+        button.dataset.id = item.id;
+        button.dataset.category = category;
+        button.tabIndex = group.querySelector(".category-dropdown").classList.contains("open") ? 0 : -1;
+        button.setAttribute("aria-selected", item.id === selectedId ? "true" : "false");
+        
+        const subtype = getItemSubtype(item);
+        button.innerHTML = 
+          '<div class="item-tile tone-' + item.tone + '">' +
+            iconMarkup(item, "item-art") +
+          '</div>' +
+          '<span class="dropdown-item-name">' + item.name + '</span>' +
+          '<span class="dropdown-item-type">' + subtype + '</span>';
+
+        button.addEventListener("click", () => {
+          selectItem(item.id, true);
+        });
+        button.addEventListener("pointerenter", () => showItemTooltip(item, button));
+        button.addEventListener("pointerleave", hideTooltip);
+        container.appendChild(button);
+      });
+    });
+  }
+
+  function updateSelectedHeader(){
+    const item = getItem(selectedId);
+    selectedName.textContent = item ? item.name : "No item selected";
+  }
+
+  function updateGridSelection(){
+    itemGrid.querySelectorAll(".item-slot[data-id]").forEach(button => {
+      const active = button.dataset.id === selectedId;
+      button.classList.toggle("is-selected", active);
+      button.setAttribute("aria-selected", active ? "true" : "false");
+    });
+    document.querySelectorAll(".dropdown-item[data-id]").forEach(button => {
+      const active = button.dataset.id === selectedId;
+      button.classList.toggle("is-selected", active);
+      button.setAttribute("aria-selected", active ? "true" : "false");
+    });
+    updateSelectedHeader();
+  }
+
+  function selectItem(id, arm){
+    // Deselect if already selected!
+    if(selectedId === id){
+      selectedId = null;
+      armedId = null;
+      updateGridSelection();
+      updateSlotHints();
+      liveRegion.textContent = "Deselected item";
+      closeItemDetailModal();
+      return;
+    }
+    const item = getItem(id);
+    if(!item) return;
+    selectedId = id;
+    if(arm) armedId = id;
+    updateGridSelection();
+    updateSlotHints();
+    liveRegion.textContent = item.name + " selected";
+
+    // Show Anime Item Detail Card on click (Image 2 replica)
+    openItemDetailModal(item);
+  }
+
+  function applyFilter(filter){
+    currentFilter = String(filter);
+    const visible = visibleItems();
+    if(!visible.some(item => item.id === selectedId)){
+      selectedId = visible.length ? visible[0].id : null;
+    }
+    armedId = null;
+    categoryTitle.textContent = currentFilter === "all" ? "ALL ITEMS" : "ITEM CATEGORY " + currentFilter;
+    document.querySelectorAll(".all-menu-option").forEach(option => {
+      option.classList.toggle("active",option.dataset.filter === currentFilter);
+    });
+    categoryGroups.forEach(group => {
+      group.querySelector(".category-button").classList.toggle("active",group.dataset.category === currentFilter);
+    });
+    if(currentFilter !== "all"){
+      categoryGroups.forEach(group => {
+        setCategoryOpen(group.dataset.category, group.dataset.category === currentFilter);
+      });
+    }
+    closeAllMenu();
+    renderGrid();
+    updateSlotHints();
+  }
+
+  function setCategoryOpen(category,open){
+    const group = categoryGroups.find(entry => entry.dataset.category === String(category));
+    if(!group) return;
+    const button = group.querySelector(".category-button");
+    const dropdown = group.querySelector(".category-dropdown");
+    dropdown.classList.toggle("open",open);
+    dropdown.setAttribute("aria-hidden",open ? "false" : "true");
+    dropdown.inert = !open;
+    button.setAttribute("aria-expanded",open ? "true" : "false");
+    dropdown.querySelectorAll("button").forEach(entry => entry.tabIndex = open ? 0 : -1);
+    updateExpandButton();
+  }
+
+  function updateExpandButton(){
+    const everyOpen = categoryGroups.every(group => group.querySelector(".category-dropdown").classList.contains("open"));
+    document.getElementById("expandIcon").setAttribute("href",everyOpen ? "#icon-minus" : "#icon-plus");
+    expandCategories.setAttribute("aria-label", everyOpen ? "Collapse All Categories" : "Expand All Categories");
+    expandCategories.title = everyOpen ? "Collapse All" : "Expand All";
+  }
+
+  function closeAllMenu(){
+    allItemsMenu.hidden = true;
+    allItemsButton.setAttribute("aria-expanded","false");
+  }
+
+  function toggleAllMenu(open){
+    const shouldOpen = typeof open === "boolean" ? open : allItemsMenu.hidden;
+    allItemsMenu.hidden = !shouldOpen;
+    allItemsButton.setAttribute("aria-expanded",shouldOpen ? "true" : "false");
+    hideTooltip();
+  }
+
+  function canEquip(item,slot){
+    if(!item) return false;
+    return slot.dataset.accept.split(",").includes(item.kind);
+  }
+
+  function updateSlotHints(){
+    const item = getItem(armedId);
+    equipmentSlots.forEach(slot => {
+      slot.classList.toggle("can-receive",!!item && canEquip(item,slot));
+    });
+  }
+
+  function renderEquipmentSlot(slot){
+    const id = equipped[slot.dataset.slot];
+    const item = getItem(id);
+    const inner = slot.querySelector(".hex-inner");
+    slot.classList.remove("tone-blue","tone-green","tone-magenta","tone-navy","tone-olive","tone-violet","tone-brown");
+    slot.classList.toggle("equipped",!!item);
+
+    if(item){
+      slot.classList.add("tone-" + item.tone);
+      inner.innerHTML = iconMarkup(item,"equipped-art");
+      slot.setAttribute("aria-label", slot.dataset.slotName + ": " + item.name + ". Click to unequip");
+    }else{
+      inner.innerHTML = "";
+      slot.setAttribute("aria-label", slot.dataset.slotName + " slot, empty");
+    }
+  }
+
+  function equipItem(itemId,slot){
+    const item = getItem(itemId);
+    if(!item) return false;
+    if(!canEquip(item,slot)){
+      slot.classList.remove("slot-shake");
+      void slot.offsetWidth;
+      slot.classList.add("slot-shake");
+      showToast("Cannot equip in this slot");
+      return false;
+    }
+    equipped[slot.dataset.slot] = item.id;
+    selectedId = item.id;
+    armedId = null;
+    renderEquipmentSlot(slot);
+    updateGridSelection();
+    updateSlotHints();
+    showToast("Equipped " + item.name + " to " + slot.dataset.slotName);
+    liveRegion.textContent = "Equipped " + item.name;
+    return true;
+  }
+
+  function unequipItem(slot){
+    const item = getItem(equipped[slot.dataset.slot]);
+    if(!item) return;
+    delete equipped[slot.dataset.slot];
+    renderEquipmentSlot(slot);
+    showToast("Unequipped " + item.name);
+    liveRegion.textContent = "Unequipped " + item.name;
+  }
+
+  function quickUseOrEquip(id){
+    const item = getItem(id);
+    if(!item) return;
+    const slot = equipmentSlots.find(candidate => canEquip(item,candidate));
+    if(slot){
+      equipItem(id,slot);
+      return;
+    }
+    if(item.kind === "consumable"){
+      item.qty -= 1;
+      showToast("Used " + item.name);
+      if(item.qty <= 0){
+        const index = items.findIndex(entry => entry.id === item.id);
+        items.splice(index,1);
+        const visible = visibleItems();
+        selectedId = visible.length ? visible[0].id : null;
+        armedId = null;
+      }
+      renderGrid();
+      renderCategoryMenus();
+    }else{
+      showToast(item.name + "：" + item.desc);
+    }
+  }
+
+  function itemTooltipMarkup(item){
+    return '<span class="tooltip-name">' + item.name + '</span>' +
+      '<span class="tooltip-type">' + item.type + '</span>' +
+      '<span class="tooltip-description">' + item.desc + '</span>' +
+      '<span class="tooltip-stat">' + item.stat + '</span>' +
+      '<span class="tooltip-quantity">Quantity: ' + item.qty + '</span>';
+  }
+
+  function showItemTooltip(item,anchor){
+    if(!item || window.matchMedia("(hover:none)").matches) return;
+    showTooltip(itemTooltipMarkup(item),anchor);
+  }
+
+  function showSlotTooltip(slot){
+    if(window.matchMedia("(hover:none)").matches) return;
+    const item = getItem(equipped[slot.dataset.slot]);
+    if(item){
+      showTooltip(itemTooltipMarkup(item),slot);
+    }else{
+      showTooltip('<span class="tooltip-name">' + slot.dataset.slotName + ' Slot</span><span class="tooltip-type">Empty Equipment Slot</span><span class="tooltip-description">Accepts: ' + slot.dataset.acceptLabel + '</span>', slot);
+    }
+  }
+
+  function showTooltip(markup,anchor){
+    tooltip.innerHTML = markup;
+    tooltip.hidden = false;
+    const rect = anchor.getBoundingClientRect();
+    const tipRect = tooltip.getBoundingClientRect();
+    let left = rect.left + rect.width / 2 - tipRect.width / 2;
+    let top = rect.top - tipRect.height - 10;
+    if(top < 8) top = rect.bottom + 10;
+    left = Math.max(8,Math.min(left,window.innerWidth - tipRect.width - 8));
+    top = Math.max(8,Math.min(top,window.innerHeight - tipRect.height - 8));
+    tooltip.style.left = left + "px";
+    tooltip.style.top = top + "px";
+  }
+
+  function hideTooltip(){
+    tooltip.hidden = true;
+  }
+
+  function showToast(message){
+    clearTimeout(toastTimer);
+    toast.textContent = message;
+    toast.classList.add("show");
+    toastTimer = setTimeout(() => toast.classList.remove("show"),2300);
+  }
+
+  function setMinimized(value){
+    minimized = value;
+    hudWindowWrapper.classList.toggle("mannequin-hidden", minimized);
+    minimizeStorage.setAttribute("aria-expanded", minimized ? "false" : "true");
+    minimizeStorage.setAttribute("aria-label", minimized ? "Show Equipment Panel" : "Hide Equipment Panel");
+    minimizeStorage.title = minimized ? "Show Equipment" : "Hide Equipment";
+    document.getElementById("minimizeIcon").setAttribute("href", minimized ? "#icon-play" : "#icon-pause");
+    hideTooltip();
+    showToast(minimized ? "Equipment panel tucked into storage" : "Equipment panel restored");
+  }
+
+  function setStorageClosed(value){
+    if (value) {
+      closeStorageWindow();
+    } else {
+      openStorageWindow();
+    }
+  }
+
+  allItemsButton.addEventListener("click",() => toggleAllMenu());
+  allItemsButton.addEventListener("keydown",event => {
+    if(event.key === "ArrowDown"){
+      event.preventDefault();
+      toggleAllMenu(true);
+      const first = allItemsMenu.querySelector("button");
+      if(first) first.focus();
+    }
+  });
+
+  allItemsMenu.addEventListener("click",event => {
+    const option = event.target.closest("[data-filter]");
+    if(option) applyFilter(option.dataset.filter);
+  });
+
+  allItemsMenu.addEventListener("keydown",event => {
+    const options = Array.from(allItemsMenu.querySelectorAll("button"));
+    const index = options.indexOf(document.activeElement);
+    if(event.key === "ArrowDown" || event.key === "ArrowUp"){
+      event.preventDefault();
+      const direction = event.key === "ArrowDown" ? 1 : -1;
+      options[(index + direction + options.length) % options.length].focus();
+    }else if(event.key === "Escape"){
+      closeAllMenu();
+      allItemsButton.focus();
+    }
+  });
+
+  categoryList.addEventListener("click",event => {
+    const dropdownItem = event.target.closest(".dropdown-item");
+    if(dropdownItem){
+      const category = dropdownItem.dataset.category;
+      if(currentFilter !== category) applyFilter(category);
+      selectItem(dropdownItem.dataset.id,true);
+      const gridItem = itemGrid.querySelector('[data-id="' + dropdownItem.dataset.id + '"]');
+      if(gridItem) gridItem.focus({preventScroll:true});
+      return;
+    }
+
+    const button = event.target.closest(".category-button");
+    if(!button) return;
+    const group = button.closest(".category-group");
+    const category = group.dataset.category;
+    const opening = button.getAttribute("aria-expanded") !== "true";
+
+    if(currentFilter !== category) applyFilter(category);
+    if(opening){
+      categoryGroups.forEach(other => {
+        if(other !== group) setCategoryOpen(other.dataset.category,false);
+      });
+    }
+    setCategoryOpen(category,opening);
+  });
+
+  equipmentSlots.forEach(slot => {
+    slot.addEventListener("click",() => {
+      if(armedId){
+        equipItem(armedId,slot);
+        return;
+      }
+      // Open Slot Equipment Selector Modal (Image 1 replica)
+      openSlotEquipModal(slot);
+    });
+    slot.addEventListener("pointerenter",() => showSlotTooltip(slot));
+    slot.addEventListener("pointerleave",hideTooltip);
+    slot.addEventListener("focus",() => showSlotTooltip(slot));
+    slot.addEventListener("blur",hideTooltip);
+    slot.addEventListener("contextmenu",event => {
+      event.preventDefault();
+      if(equipped[slot.dataset.slot]) unequipItem(slot);
+    });
+    slot.addEventListener("dragover",event => {
+      const item = getItem(armedId);
+      if(item && canEquip(item,slot)){
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "copy";
+        slot.classList.add("drag-over");
+      }
+    });
+    slot.addEventListener("dragleave",() => slot.classList.remove("drag-over"));
+    slot.addEventListener("drop",event => {
+      event.preventDefault();
+      slot.classList.remove("drag-over");
+      const id = event.dataTransfer.getData("text/plain") || armedId;
+      if(id){
+        selectedId = id;
+        equipItem(id,slot);
+      }
+    });
+  });
+
+  itemGrid.addEventListener("keydown",event => {
+    const current = event.target.closest(".item-slot");
+    if(!current) return;
+    const cells = Array.from(itemGrid.querySelectorAll(".item-slot"));
+    const index = cells.indexOf(current);
+    const columns = getComputedStyle(itemGrid).gridTemplateColumns.split(" ").filter(Boolean).length;
+    let delta = 0;
+
+    if(event.key === "ArrowRight") delta = 1;
+    else if(event.key === "ArrowLeft") delta = -1;
+    else if(event.key === "ArrowDown") delta = columns;
+    else if(event.key === "ArrowUp") delta = -columns;
+    else if(event.key === "Home"){
+      event.preventDefault();
+      const first = cells.find(cell => !cell.classList.contains("empty"));
+      if(first) first.focus();
+      return;
+    }else if(event.key === "End"){
+      event.preventDefault();
+      const available = cells.filter(cell => !cell.classList.contains("empty"));
+      if(available.length) available[available.length - 1].focus();
+      return;
+    }else return;
+
+    event.preventDefault();
+    if((event.key === "ArrowRight" && index % columns === columns - 1) ||
+       (event.key === "ArrowLeft" && index % columns === 0)) return;
+
+    let next = index + delta;
+    while(cells[next] && cells[next].classList.contains("empty")) next += delta;
+    if(cells[next]) cells[next].focus();
+  });
+
+  minimizeStorage.addEventListener("click",() => setMinimized(!minimized));
+
+  expandCategories.addEventListener("click",() => {
+    if(storageClosed) setStorageClosed(false);
+    if(minimized) setMinimized(false);
+    const everyOpen = categoryGroups.every(group => group.querySelector(".category-dropdown").classList.contains("open"));
+    categoryGroups.forEach(group => setCategoryOpen(group.dataset.category,!everyOpen));
+    showToast(everyOpen ? "Collapsed all categories" : "Expanded all categories");
+  });
+
+  closeStorage.addEventListener("click",() => setStorageClosed(!storageClosed));
+  storageTab.addEventListener("click",() => {
+    if(storageClosed){
+      setStorageClosed(false);
+    }else{
+      const selected = itemGrid.querySelector(".item-slot.is-selected");
+      if(selected) selected.focus({preventScroll:true});
+    }
+  });
+
+  document.addEventListener("pointerdown",event => {
+    if(!event.target.closest(".all-items-wrap")) closeAllMenu();
+  });
+
+  document.addEventListener("keydown",event => {
+    if(event.key !== "Escape") return;
+    closeAllMenu();
+    hideTooltip();
+    armedId = null;
+    updateSlotHints();
+  });
+
+  storageContent.addEventListener("scroll",hideTooltip);
+
+  function fitHud(){
+    if(!hudCanvas) return;
+    if(window.innerWidth <= 680){
+      hudCanvas.style.setProperty("--hud-scale",1);
+      return;
+    }
+    const scale = Math.min(1, window.innerWidth / 1020, window.innerHeight / 720);
+    hudCanvas.style.setProperty("--hud-scale", scale);
+  }
+
+  window.addEventListener("resize",() => {
+    fitHud();
+    hideTooltip();
+  });
+
+  categoryGroups.forEach(group => {
+    const dropdown = group.querySelector(".category-dropdown");
+    dropdown.inert = true;
+  });
+
+  
+  /* ============================================================
+     SLOT EQUIPMENT SELECTOR MODAL CONTROLLER (Image 1 replica)
+     ============================================================ */
+  const slotEquipModal = document.getElementById("slotEquipModal");
+  const slotModalTitle = document.getElementById("slotModalTitle");
+  const slotModalBody = document.getElementById("slotModalBody");
+  const closeSlotModal = document.getElementById("closeSlotModal");
+
+  function openSlotEquipModal(slot){
+    const slotKey = slot.dataset.slot;
+    const slotName = slot.dataset.slotName;
+    slotModalTitle.textContent = slotName + " Equipment";
+    slotModalBody.innerHTML = "";
+
+    const currentlyEquippedId = equipped[slotKey];
+    const currentlyEquipped = currentlyEquippedId ? getItem(currentlyEquippedId) : null;
+
+    if(currentlyEquipped){
+      const unequipBtn = document.createElement("button");
+      unequipBtn.type = "button";
+      unequipBtn.className = "slot-unequip-btn";
+      unequipBtn.textContent = "Unequip (" + currentlyEquipped.name + ")";
+      unequipBtn.addEventListener("click", () => {
+        unequipItem(slot);
+        closeSlotEquipModal();
+      });
+      slotModalBody.appendChild(unequipBtn);
+    }
+
+    // Get compatible items from storage
+    const compatible = items.filter(item => canEquip(item, slot));
+
+    if(compatible.length === 0 && !currentlyEquipped){
+      slotModalBody.innerHTML = '<div class="slot-empty-notice">No compatible equipment available in storage.</div>';
+    }else{
+      compatible.forEach(item => {
+        const isCurrent = item.id === currentlyEquippedId;
+        const row = document.createElement("button");
+        row.type = "button";
+        row.className = "slot-equip-row" + (isCurrent ? " is-equipped" : "");
+        row.innerHTML = 
+          '<div class="slot-item-tile tone-' + item.tone + '">' +
+            iconMarkup(item, "item-art") +
+          '</div>' +
+          '<div class="slot-row-info">' +
+            '<span class="slot-row-name">' + item.name + (item.jpName ? ' / ' + item.jpName : '') + (isCurrent ? ' (Equipped)' : '') + '</span>' +
+            '<span class="slot-row-meta">' + item.type + ' • ' + (item.rarity || 'Common') + ' • ' + item.stat + '</span>' +
+          '</div>';
+        row.addEventListener("click", () => {
+          equipItem(item.id, slot);
+          closeSlotEquipModal();
+        });
+        slotModalBody.appendChild(row);
+      });
+    }
+
+    slotEquipModal.hidden = false;
+  }
+
+  function closeSlotEquipModal(){
+    slotEquipModal.hidden = true;
+  }
+
+  closeSlotModal.addEventListener("click", closeSlotEquipModal);
+  slotEquipModal.addEventListener("click", event => {
+    if(event.target === slotEquipModal) closeSlotEquipModal();
+  });
+
+  /* ============================================================
+     ANIME ITEM DETAIL MODAL CONTROLLER (Image 3 Replica)
+     - English Only
+     - Glowing Green Rounded Tile Border
+     - 3 Actions: Equip/Unequip, Discard, Close
+     ============================================================ */
+  const itemDetailModal = document.getElementById("itemDetailModal");
+  const closeDetailModal = document.getElementById("closeDetailModal");
+  const detailCloseActionBtn = document.getElementById("detailCloseActionBtn");
+  const detailIconTile = document.getElementById("detailIconTile");
+  const detailIconSvg = document.getElementById("detailIconSvg");
+  const detailName = document.getElementById("detailName");
+  const detailRarity = document.getElementById("detailRarity");
+  const detailTypeLine = document.getElementById("detailTypeLine");
+  const detailDesc = document.getElementById("detailDesc");
+  const detailBadges = document.getElementById("detailBadges");
+  const detailPrimaryBtn = document.getElementById("detailPrimaryBtn");
+  const detailDropBtn = document.getElementById("detailDropBtn");
+
+  let currentDetailItemId = null;
+
+  function getItemTypeLine(item){
+    if(item.kind === "weapon") return "Weapon • Equipment Slot: Main Hand";
+    if(item.kind === "offhand" || item.kind === "shield") return "Armor • Equipment Slot: Shield / Offhand";
+    if(item.kind === "head") return "Armor • Equipment Slot: Head";
+    if(item.kind === "body") return "Armor • Equipment Slot: Body";
+    if(item.kind === "feet") return "Armor • Equipment Slot: Feet";
+    if(item.kind === "hands") return "Armor • Equipment Slot: Hands";
+    if(item.kind === "accessory") return "Armor • Equipment Slot: Accessory";
+    if(item.kind === "back") return "Armor • Equipment Slot: Back";
+    if(item.kind === "consumable") return "Consumable • Provisions & Potions";
+    return "Storage Item • General";
+  }
+
+  function openItemDetailModal(item){
+    currentDetailItemId = item.id;
+    
+    // Icon & tone
+    detailIconTile.className = "detail-item-tile tone-" + item.tone;
+    detailIconSvg.querySelector("use").setAttribute("href", "#i-" + item.icon);
+
+    // English Only Name & Rarity
+    detailName.textContent = item.name;
+    const rarityText = item.rarity ? (item.rarity.charAt(0).toUpperCase() + item.rarity.slice(1).toLowerCase()) : "Common";
+    detailRarity.textContent = rarityText;
+
+    // Type classification line
+    detailTypeLine.textContent = getItemTypeLine(item);
+
+    // Lore Description
+    detailDesc.textContent = item.desc;
+
+    // Stat Badges
+    detailBadges.innerHTML = "";
+    if(item.stat){
+      const statParts = item.stat.split(/[,/]/);
+      statParts.forEach(part => {
+        const span = document.createElement("span");
+        span.className = "stat-badge";
+        span.textContent = part.trim();
+        detailBadges.appendChild(span);
+      });
+    }
+
+    const equippedSlotKey = Object.keys(equipped).find(key => equipped[key] === item.id);
+    if(equippedSlotKey){
+      detailPrimaryBtn.textContent = "Unequip";
+      detailPrimaryBtn.classList.add("is-unequip");
+    }else{
+      detailPrimaryBtn.classList.remove("is-unequip");
+      if(item.kind === "consumable"){
+        detailPrimaryBtn.textContent = "Use";
+      }else{
+        detailPrimaryBtn.textContent = "Equip";
+      }
+    }
+
+    itemDetailModal.hidden = false;
+  }
+
+  function closeItemDetailModal(){
+    itemDetailModal.hidden = true;
+    currentDetailItemId = null;
+  }
+
+  closeDetailModal.addEventListener("click", closeItemDetailModal);
+  if(detailCloseActionBtn){
+    detailCloseActionBtn.addEventListener("click", closeItemDetailModal);
+  }
+
+  // Click outside listener for modals without overlay
+  document.addEventListener("pointerdown", event => {
+    if(!itemDetailModal.hidden && !event.target.closest("#itemDetailModal .detail-card") && !event.target.closest(".item-slot") && !event.target.closest("#equipmentPanel .hex-slot")){
+      closeItemDetailModal();
+    }
+    if(!slotEquipModal.hidden && !event.target.closest("#slotEquipModal .slot-modal-card") && !event.target.closest("#equipmentPanel .hex-slot")){
+      closeSlotEquipModal();
+    }
+  });
+
+  detailPrimaryBtn.addEventListener("click", () => {
+    if(!currentDetailItemId) return;
+    const item = getItem(currentDetailItemId);
+    if(!item) return;
+
+    const equippedSlotKey = Object.keys(equipped).find(key => equipped[key] === item.id);
+    if(equippedSlotKey){
+      const slotEl = document.querySelector('#equipmentPanel .hex-slot[data-slot="' + equippedSlotKey + '"]');
+      if(slotEl) unequipItem(slotEl);
+      showToast("Unequipped " + item.name);
+    }else{
+      quickUseOrEquip(item.id);
+      showToast("Equipped " + item.name);
+    }
+    closeItemDetailModal();
+  });
+
+  detailDropBtn.addEventListener("click", () => {
+    if(!currentDetailItemId) return;
+    const item = getItem(currentDetailItemId);
+    showToast("Discarded: " + (item ? item.name : ""));
+    closeItemDetailModal();
+  });
+
+  /* ============================================================
+     WHOLE COMPONENT DRAGGING WITH MOUSE
+     ============================================================ */
+  if(reopenBtn) reopenBtn.addEventListener("click", () => setStorageClosed(false));
+
+  const dragHandles = [
+    document.getElementById("storageDragHandle"),
+    document.querySelector(".window-titlebar"),
+    document.querySelector(".equipment-title")
+  ].filter(Boolean);
+
+  let isDraggingHUD = false, hudStartX = 0, hudStartY = 0, hudOrigLeft = 0, hudOrigTop = 0;
+
+  dragHandles.forEach(handle => {
+    handle.style.cursor = "move";
+    handle.addEventListener("mousedown", event => {
+      if(event.target.closest("#closeStorage") || event.target.closest(".window-control")) return;
+      isDraggingHUD = true;
+      const rect = hudWindow.getBoundingClientRect();
+      hudOrigLeft = rect.left;
+      hudOrigTop = rect.top;
+      hudStartX = event.clientX;
+      hudStartY = event.clientY;
+      event.preventDefault();
+    });
+  });
+
+  window.addEventListener("mousemove", event => {
+    if(!isDraggingHUD) return;
+    const dx = event.clientX - hudStartX;
+    const dy = event.clientY - hudStartY;
+    hudWindow.style.position = "fixed";
+    hudWindow.style.left = (hudOrigLeft + dx) + "px";
+    hudWindow.style.top = (hudOrigTop + dy) + "px";
+    hudWindow.style.margin = "0";
+    hudWindow.style.transform = minimized ? "translateX(-138px)" : "none";
+  });
+
+  window.addEventListener("mouseup", () => {
+    isDraggingHUD = false;
+  });
+
+  renderCategoryMenus();
+  renderGrid();
+  equipmentSlots.forEach(renderEquipmentSlot);
+  updateExpandButton();
+  setCategoryOpen("1", false);
+  fitHud();
+
+
+  function openStorageWindow() {
+    if (typeof charWin !== 'undefined' && charWin) charWin.classList.add("hidden");
+    if (typeof mainWin !== 'undefined' && mainWin) {
+      mainWin.classList.add('hidden');
+      if (typeof currentMainWinView !== 'undefined') currentMainWinView = null;
+    }
+    if (typeof closeMapModal === 'function') closeMapModal();
+    hudWindowWrapper.classList.remove("hidden");
+    hudWindowWrapper.style.display = "flex";
+    storageClosed = false;
+    if(typeof setActiveRightHex === 'function') setActiveRightHex("storage");
+    showToast("Storage & Equipment window opened");
+  }
+
+  function closeStorageWindow() {
+    hudWindowWrapper.classList.add("hidden");
+    hudWindowWrapper.style.display = "none";
+    storageClosed = true;
+    minimized = false;
+    hudWindowWrapper.classList.remove("mannequin-hidden");
+    const minIcon = document.getElementById("minimizeIcon");
+    if(minIcon) minIcon.setAttribute("href", "#icon-pause");
+    closeAllMenu();
+    hideTooltip();
+    closeSlotEquipModal();
+    closeItemDetailModal();
+    if(typeof setActiveRightHex === 'function') setActiveRightHex(null);
+    showToast("Storage & Equipment window closed");
+  }
+
+  function toggleStorageWindow() {
+    if (storageClosed || hudWindowWrapper.classList.contains("hidden") || hudWindowWrapper.style.display === "none") {
+      openStorageWindow();
+    } else {
+      closeStorageWindow();
+    }
+  }
+
+  window.openStorageWindow = openStorageWindow;
+  window.closeStorageWindow = closeStorageWindow;
+  window.toggleStorageWindow = toggleStorageWindow;
+
+  // Start hidden initially in full SystemUI
+  hudWindowWrapper.classList.add("hidden");
+  hudWindowWrapper.style.display = "none";
+  storageClosed = true;
+
+})();
