@@ -144,8 +144,10 @@ function syncStatusUI() {
 /* Trigger Meteor Shower (Level 1 -> Level 310 canonical anime moment!) */
 function triggerMeteorShower() {
     const flash = document.getElementById('meteorFlash');
-    flash.style.opacity = '1';
-    setTimeout(() => { flash.style.opacity = '0'; }, 650);
+    if (flash) {
+        flash.style.opacity = '1';
+        setTimeout(() => { flash.style.opacity = '0'; }, 650);
+    }
 
     if (satouState.level === 1) {
         satouState.level = 310;
@@ -161,8 +163,25 @@ function triggerMeteorShower() {
         satouState.logs.unshift('Dragon God Akura-Ou and hundreds of thousands of monsters defeated.');
         satouState.logs.unshift('Level increased from 1 → 310!');
         showToast('[Meteor Shower] Cast! Level 1 → Level 310 reached!');
+
+        // Level 310: Unlock full list of skills & 3100 skill points
+        skillsData = postMeteorSkillsData;
+        skillPoints = 3100;
+        selectedSkillId = currentTab === 'spells' ? 'meteor_shower' : 'enemy_detection';
+        updateSPDisplay();
+        renderDetailCard();
+        renderSkillsList();
+
+        // Close skills window if open so Character Status panel has full focus
+        if (charWin) charWin.classList.add('hidden');
+
+        // Open Character Status panel displaying full Level 310 status
+        renderPanelView('status');
+        mainWin.style.zIndex = '35';
+        mainWin.style.left = 'calc(50% - 148px)';
+        mainWin.style.top = 'calc(50% - 210px)';
     } else {
-        // Toggle back to exact Level 1 screenshot state
+        // Toggle back to exact Level 1 beginner state: only 2 beginner skills, 0 SP
         satouState.level = 1;
         satouState.expPercent = 0;
         satouState.statPointsAvailable = 0;
@@ -172,7 +191,24 @@ function triggerMeteorShower() {
         satouState.hp = [10, 10];
         satouState.mp = [10, 10];
         satouState.sp = [10, 10];
+        satouState.logs.unshift('Reset character status to initial Level 1 state.');
         showToast('Reset to initial stats (Level 1)');
+
+        skillsData = beginnerSkillsData;
+        skillPoints = 0;
+        selectedSkillId = currentTab === 'spells' ? 'meteor_shower' : 'enemy_detection';
+        updateSPDisplay();
+        renderDetailCard();
+        renderSkillsList();
+
+        // Close skills window if open so Character Status panel has full focus
+        if (charWin) charWin.classList.add('hidden');
+
+        // Refresh and open Character Status panel
+        renderPanelView('status');
+        mainWin.style.zIndex = '35';
+        mainWin.style.left = 'calc(50% - 148px)';
+        mainWin.style.top = 'calc(50% - 210px)';
     }
     syncStatusUI();
 }
@@ -261,8 +297,29 @@ function setActiveRightHex(menuKey) {
     });
 }
 
+let currentMainWinView = 'status';
+
 function renderPanelView(viewType) {
+    // Skills and Magic are hosted in charWin (#charWindowWrapper)
+    if (viewType === 'skills') {
+        openCharWindow('skills');
+        return;
+    }
+    if (viewType === 'magic') {
+        openCharWindow('spells');
+        return;
+    }
+    // Storage is hosted in hudWindowWrapper (#hudWindowWrapper)
+    if (viewType === 'storage') {
+        if (typeof window.toggleStorageWindow === 'function') {
+            window.toggleStorageWindow();
+        }
+        return;
+    }
+
+    // All other views (status, parameter, journal, log, settings) are inside mainWin (#mainSysWindow)
     mainWin.classList.remove('hidden');
+    currentMainWinView = viewType;
 
     if (viewType === 'status') {
         winHeaderTitle.textContent = 'CHARACTER';
@@ -274,11 +331,9 @@ function renderPanelView(viewType) {
         tabOther.style.display = 'none';
         bindSubnavClicks();
         setActiveRightHex('status');
+        syncStatusUI();
         return;
     }
-
-    tabStatus.style.display = 'none';
-    tabOther.style.display = 'grid';
 
     if (viewType === 'parameter') {
         winHeaderTitle.textContent = 'CHARACTER';
@@ -286,7 +341,10 @@ function renderPanelView(viewType) {
         <div class="subnav-tab" data-subtab="status">STATUS</div>
         <div class="subnav-tab active" data-subtab="parameter">PARAMETER</div>
       `;
+        tabStatus.style.display = 'none';
+        tabOther.style.display = 'grid';
         bindSubnavClicks();
+        setActiveRightHex('status');
         dynamicBody.innerHTML = `
         <div style="font-size:10px; color:#dcd7c4; display:flex; flex-direction:column; gap:7px;">
           <div style="display:flex; justify-content:space-between; border-bottom:1px solid #595349; padding-bottom:4px;">
@@ -309,21 +367,13 @@ function renderPanelView(viewType) {
           </div>
         </div>
       `;
-    } else if (viewType === 'skills') {
-        setActiveRightHex('skills');
-        openCharWindow('skills');
         return;
-    } else if (viewType === 'magic') {
-        setActiveRightHex('magic');
-        openCharWindow('spells');
-        return;
-    } else if (viewType === 'storage') {
-        setActiveRightHex('storage');
-        if (typeof window.toggleStorageWindow === 'function') {
-            window.toggleStorageWindow();
-        }
-        return;
-    } else if (viewType === 'journal') {
+    }
+
+    tabStatus.style.display = 'none';
+    tabOther.style.display = 'grid';
+
+    if (viewType === 'journal') {
         setActiveRightHex('journal');
         winHeaderTitle.textContent = 'QUESTS & LORE';
         winSubnav.innerHTML = `<div class="subnav-tab active">WORLD INFO</div>`;
@@ -339,7 +389,7 @@ function renderPanelView(viewType) {
         winHeaderTitle.textContent = 'SYSTEM LOG';
         winSubnav.innerHTML = `<div class="subnav-tab active">SYSTEM LOG</div>`;
         dynamicBody.innerHTML = `
-        <div class="custom-scroll" style="font-size:9.5px; line-height:1.55;">
+        <div class="custom-scroll" style="font-size:9.5px; line-height:1.55; max-height:220px; overflow-y:auto;">
           ${satouState.logs.map(l => `<div style="padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.08);">• ${l}</div>`).join('')}
         </div>
       `;
@@ -400,19 +450,62 @@ function bindSubnavClicks() {
 }
 bindSubnavClicks();
 
-// Right Wing Menu Hex Clicks
+// Right Wing Menu Hex Clicks - with toggle (open if closed, close if open on re-click)
 document.querySelectorAll('.hex-slot[data-menu]').forEach(slot => {
     slot.addEventListener('click', () => {
         const menu = slot.dataset.menu;
-        renderPanelView(menu);
+
+        if (menu === 'status') {
+            const isMainOpen = !mainWin.classList.contains('hidden');
+            if (isMainOpen && currentMainWinView === 'status') {
+                mainWin.classList.add('hidden');
+                setActiveRightHex(null);
+                showToast('Character status window closed');
+            } else {
+                renderPanelView('status');
+                showToast('Character status window opened');
+            }
+        } else if (menu === 'skills') {
+            const isCharOpen = !charWin.classList.contains('hidden');
+            if (isCharOpen && currentTab === 'skills') {
+                charWin.classList.add('hidden');
+                setActiveRightHex(null);
+                showToast('Skills window closed');
+            } else {
+                openCharWindow('skills');
+            }
+        } else if (menu === 'magic') {
+            const isCharOpen = !charWin.classList.contains('hidden');
+            if (isCharOpen && currentTab === 'spells') {
+                charWin.classList.add('hidden');
+                setActiveRightHex(null);
+                showToast('Magic spells window closed');
+            } else {
+                openCharWindow('spells');
+            }
+        } else if (menu === 'storage') {
+            if (typeof window.toggleStorageWindow === 'function') {
+                window.toggleStorageWindow();
+            }
+        } else if (menu === 'journal' || menu === 'log' || menu === 'settings') {
+            const isMainOpen = !mainWin.classList.contains('hidden');
+            if (isMainOpen && currentMainWinView === menu) {
+                mainWin.classList.add('hidden');
+                setActiveRightHex(null);
+                showToast(`${menu.toUpperCase()} window closed`);
+            } else {
+                renderPanelView(menu);
+            }
+        }
     });
 });
 
-// Left Wing Action Hex Clicks
+// Left Wing Action Hex Clicks (Meteor charges & shortcuts)
 document.querySelectorAll('.hex-slot[data-action]').forEach(slot => {
     slot.addEventListener('click', () => {
         const act = slot.dataset.action;
-        if (act === 'meteor') {
+        if (act === 'meteor' || act.startsWith('alert') || act === 'slot1' || act === 'slot2' || act === 'slot3') {
+            slot.classList.remove('pulse-hex');
             triggerMeteorShower();
         } else if (act === 'radar') {
             if (typeof triggerRadarScan === 'function') {
@@ -420,12 +513,8 @@ document.querySelectorAll('.hex-slot[data-action]').forEach(slot => {
             } else {
                 showToast('Radar / Detection Scan initialized');
             }
-        } else if (act.startsWith('alert')) {
-            slot.classList.remove('pulse-hex');
-            renderPanelView('skills');
-            showToast('Opened acquired skill list');
         } else {
-            showToast('This shortcut slot is unassigned');
+            triggerMeteorShower();
         }
     });
 });
@@ -433,6 +522,7 @@ document.querySelectorAll('.hex-slot[data-action]').forEach(slot => {
 // Close button on center window
 document.getElementById('winCloseBtn').addEventListener('click', () => {
     mainWin.classList.add('hidden');
+    setActiveRightHex(null);
     showToast('Window closed (Click bottom menu icons to re-open)');
 });
 
@@ -507,24 +597,49 @@ const SKILL_ICONS = {
     </svg>`
 };
 
-const skillsData = [
+const beginnerSkillsData = [
     {
-      id: 'enemy_detection',
-      name: 'Enemy Detection',
-      en: 'Enemy Detection (Radar Scan)',
-      category: 'PERCEPTION',
-      level: 10,
-      maxLevel: 10,
-      active: true,
-      icon: 'mind',
-      tab: 'skills'
+        id: 'enemy_detection',
+        name: 'Enemy Detection',
+        en: 'Enemy Detection (Radar Scan)',
+        category: 'PERCEPTION',
+        level: 1,
+        maxLevel: 10,
+        active: true,
+        icon: 'mind',
+        tab: 'skills'
+    },
+    {
+        id: 'meteor_shower',
+        name: 'Guided Meteor Shower',
+        en: 'Meteor Shower (All-Map)',
+        category: 'MAGIC',
+        level: 1,
+        maxLevel: 10,
+        active: true,
+        icon: 'magic',
+        tab: 'spells'
+    }
+];
+
+const postMeteorSkillsData = [
+    {
+        id: 'enemy_detection',
+        name: 'Enemy Detection',
+        en: 'Enemy Detection (Radar Scan)',
+        category: 'PERCEPTION',
+        level: 10,
+        maxLevel: 10,
+        active: true,
+        icon: 'mind',
+        tab: 'skills'
     },
     {
         id: 'mind_res',
         name: 'Mental Resistance',
         en: 'Mental Resistance',
         category: 'PERCEPTION',
-        level: 0,
+        level: 10,
         maxLevel: 10,
         active: true,
         icon: 'mind',
@@ -546,20 +661,20 @@ const skillsData = [
         name: 'Service / Hospitality',
         en: 'Service / Hospitality',
         category: 'LIFE',
-        level: 1,
+        level: 10,
         maxLevel: 10,
-        active: false,
+        active: true,
         icon: 'service',
         tab: 'skills'
     },
     {
         id: 'contract',
-        name: 'Contract',
-        en: 'Contract',
+        name: 'Contract / Negotiation',
+        en: 'Contract / Negotiation',
         category: 'LIFE',
-        level: 1,
+        level: 10,
         maxLevel: 10,
-        active: false,
+        active: true,
         icon: 'contract',
         tab: 'skills'
     },
@@ -577,7 +692,7 @@ const skillsData = [
     {
         id: 'rot_res',
         name: 'Rot Resistance',
-        en: 'Rot / Decay Resistance',
+        en: 'Rot Resistance',
         category: 'COMBAT',
         level: 10,
         maxLevel: 10,
@@ -622,18 +737,7 @@ const skillsData = [
         id: 'lightning_res',
         name: 'Lightning Resistance',
         en: 'Lightning Resistance',
-        category: 'COMBAT',
-        level: 10,
-        maxLevel: 10,
-        active: true,
-        icon: 'lightning',
-        tab: 'skills'
-    },
-    {
-        id: 'sky_drive',
-        name: 'Ground Shrink (Shukuchi)',
-        en: 'Shukuchi / Ground Shrink',
-        category: 'COMBAT',
+        category: 'MAGIC',
         level: 10,
         maxLevel: 10,
         active: true,
@@ -642,8 +746,8 @@ const skillsData = [
     },
     {
         id: 'cooking',
-        name: 'Cooking',
-        en: 'Cooking',
+        name: 'Cooking Art',
+        en: 'Cooking Art',
         category: 'PRODUCTION',
         level: 10,
         maxLevel: 10,
@@ -731,12 +835,15 @@ const skillsData = [
     }
 ];
 
+// Initially Level 1 beginner state: only 2 beginner skills, 0 SP
+let skillsData = beginnerSkillsData;
+let skillPoints = 0;
+
 // Character window state
 let currentTab = 'skills';
 let selectedSkillId = 'mind_res';
 let filterCategory = 'ALL';
 let filterState = 'ALL';
-let skillPoints = 3100;
 let showExactSP = false;
 
 // Character window DOM Elements
@@ -762,13 +869,16 @@ function openCharWindow(tab = 'skills') {
         document.querySelectorAll('.subtab-item').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.tab === currentTab);
         });
-        const firstSkill = skillsData.find(s => s.tab === currentTab);
-        if (firstSkill && (!selectedSkillId || !skillsData.find(s => s.id === selectedSkillId && s.tab === currentTab))) {
-            selectedSkillId = firstSkill.id;
+        skillsData = (satouState.level >= 310) ? postMeteorSkillsData : beginnerSkillsData;
+        const available = skillsData.filter(s => s.tab === currentTab);
+        if (available.length > 0 && (!selectedSkillId || !available.find(s => s.id === selectedSkillId))) {
+            selectedSkillId = available[0].id;
         }
         renderDetailCard();
         renderSkillsList();
+        updateSPDisplay();
     }
+    setActiveRightHex(tab === 'spells' ? 'magic' : 'skills');
     showToast(tab === 'spells' ? 'Character (Spells List) opened' : 'Character (Skills List) opened');
 }
 
@@ -781,6 +891,14 @@ function renderDetailCard() {
     detailSkillName.textContent = skill.name;
     detailSkillCat.textContent = `CATEGORY : ${skill.category}`;
 
+    if (skill.id === 'meteor_shower') {
+        upgradeSkillBtn.disabled = false;
+        upgradeSkillBtn.textContent = 'CAST METEOR';
+        upgradeSkillBtn.onclick = (e) => {
+            e.stopPropagation();
+            triggerMeteorShower();
+        };
+    }
     if (skill.active) {
         detailToggleSwitch.classList.remove('off-state');
         detailToggleKnob.textContent = 'ON';
@@ -793,6 +911,10 @@ function renderDetailCard() {
         upgradeSkillBtn.disabled = true;
         upgradeSkillBtn.textContent = 'MASTERY';
         upgradeNoteText.innerHTML = 'Maximum level<br>reached.';
+    } else if (skillPoints <= 0) {
+        upgradeSkillBtn.disabled = true;
+        upgradeSkillBtn.textContent = 'UPGRADE';
+        upgradeNoteText.innerHTML = '0 skill points.<br>Cast Meteor to gain SP.';
     } else {
         upgradeSkillBtn.disabled = false;
         upgradeSkillBtn.textContent = 'UPGRADE';
@@ -835,9 +957,7 @@ function renderSkillsList() {
     });
 
     filtered.forEach(skill => {
-        if (skill.id === 'mind_res' && selectedSkillId === 'mind_res' && filterCategory === 'ALL' && filterState === 'ALL') {
-            return;
-        }
+        // Keep all matching skills visible
 
         const row = document.createElement('div');
         row.className = 'skill-row';
@@ -863,6 +983,9 @@ function renderSkillsList() {
             selectedSkillId = skill.id;
             renderDetailCard();
             renderSkillsList();
+            if (skill.id === 'meteor_shower') {
+                triggerMeteorShower();
+            }
         });
 
         skillsListContainer.appendChild(row);
@@ -870,7 +993,11 @@ function renderSkillsList() {
 }
 
 function updateSPDisplay() {
-    spDisplayVal.textContent = showExactSP ? skillPoints : (skillPoints > 99 ? '99+' : skillPoints);
+    if (skillPoints === 0) {
+        spDisplayVal.textContent = '0';
+    } else {
+        spDisplayVal.textContent = showExactSP ? skillPoints : (skillPoints > 99 ? '99+' : skillPoints);
+    }
 }
 
 detailToggleSwitch.addEventListener('click', () => {
@@ -911,6 +1038,7 @@ document.querySelectorAll('.subtab-item').forEach(btn => {
         document.querySelectorAll('.subtab-item').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         currentTab = btn.dataset.tab;
+        setActiveRightHex(currentTab === 'spells' ? 'magic' : 'skills');
         const firstSkill = skillsData.find(s => s.tab === currentTab);
         if (firstSkill) selectedSkillId = firstSkill.id;
         renderDetailCard();
@@ -981,6 +1109,7 @@ document.getElementById('resetSelectedBtn').addEventListener('click', () => {
 document.getElementById('closeCharWindowBtn').addEventListener('click', (e) => {
     e.stopPropagation();
     charWin.classList.add('hidden');
+    setActiveRightHex(null);
     showToast('Character window closed (Click bottom menu icons to re-open)');
 });
 
@@ -2070,13 +2199,35 @@ window.addEventListener('mouseup', () => { isPanningMap = false; });
   storageContent.addEventListener("scroll",hideTooltip);
 
   function fitHud(){
-    if(!hudCanvas) return;
-    if(window.innerWidth <= 680){
-      hudCanvas.style.setProperty("--hud-scale",1);
-      return;
-    }
-    const scale = Math.min(1, window.innerWidth / 1020, window.innerHeight / 720);
-    hudCanvas.style.setProperty("--hud-scale", scale);
+    const wrapper = document.getElementById("hudWindowWrapper");
+    if(!wrapper) return;
+
+    const vpW = window.innerWidth;
+    const vpH = window.innerHeight;
+
+    // Bottom dock is fixed at bottom: 18px with height: 112px -> extends 130px from bottom.
+    // Reserve 146px at bottom (130px dock + 16px safety gap).
+    // Reserve at least 14px top margin.
+    const dockOccupied = 146;
+    const minTop = 14;
+    const availH = Math.max(260, vpH - dockOccupied - minTop);
+    const availW = Math.max(320, vpW - 32);
+
+    const baseW = 752;
+    const baseH = 650;
+
+    // Scale down dynamically so the entire window (including currency bar) stays ABOVE navbar
+    const scaleH = availH / baseH;
+    const scaleW = availW / baseW;
+    const scale = Math.min(1, scaleH, scaleW);
+
+    // Center vertically in available space above dock
+    const scaledH = baseH * scale;
+    const extraSpace = availH - scaledH;
+    const topPos = Math.max(minTop, Math.round(minTop + extraSpace * 0.38));
+
+    wrapper.style.setProperty("--hud-scale", scale.toFixed(3));
+    wrapper.style.setProperty("--hud-top", topPos + "px");
   }
 
   window.addEventListener("resize",() => {
@@ -2305,6 +2456,7 @@ window.addEventListener('mouseup', () => { isPanningMap = false; });
       hudOrigTop = rect.top;
       hudStartX = event.clientX;
       hudStartY = event.clientY;
+      hudWindow.style.transition = "none";
       event.preventDefault();
     });
   });
@@ -2317,11 +2469,17 @@ window.addEventListener('mouseup', () => { isPanningMap = false; });
     hudWindow.style.left = (hudOrigLeft + dx) + "px";
     hudWindow.style.top = (hudOrigTop + dy) + "px";
     hudWindow.style.margin = "0";
-    hudWindow.style.transform = minimized ? "translateX(-138px)" : "none";
+    hudWindow.style.transformOrigin = "top left";
+    hudWindow.style.transform = minimized 
+      ? "translateX(calc(-138px * var(--hud-scale, 1))) scale(var(--hud-scale, 1))" 
+      : "scale(var(--hud-scale, 1))";
   });
 
   window.addEventListener("mouseup", () => {
-    isDraggingHUD = false;
+    if(isDraggingHUD) {
+      isDraggingHUD = false;
+      hudWindow.style.transition = "";
+    }
   });
 
   renderCategoryMenus();
@@ -2339,6 +2497,15 @@ window.addEventListener('mouseup', () => { isPanningMap = false; });
       if (typeof currentMainWinView !== 'undefined') currentMainWinView = null;
     }
     if (typeof closeMapModal === 'function') closeMapModal();
+
+    // Reset any manual drag offsets so auto dynamic scaling & positioning work
+    hudWindow.style.left = "";
+    hudWindow.style.top = "";
+    hudWindow.style.position = "";
+    hudWindow.style.margin = "";
+    hudWindow.style.transform = "";
+
+    fitHud();
     hudWindowWrapper.classList.remove("hidden");
     hudWindowWrapper.style.display = "flex";
     storageClosed = false;
@@ -2352,6 +2519,11 @@ window.addEventListener('mouseup', () => { isPanningMap = false; });
     storageClosed = true;
     minimized = false;
     hudWindowWrapper.classList.remove("mannequin-hidden");
+    hudWindow.style.left = "";
+    hudWindow.style.top = "";
+    hudWindow.style.position = "";
+    hudWindow.style.margin = "";
+    hudWindow.style.transform = "";
     const minIcon = document.getElementById("minimizeIcon");
     if(minIcon) minIcon.setAttribute("href", "#icon-pause");
     closeAllMenu();
@@ -2380,3 +2552,7 @@ window.addEventListener('mouseup', () => { isPanningMap = false; });
   storageClosed = true;
 
 })();
+
+// Initial UI sync on load
+syncStatusUI();
+renderPanelView('status');

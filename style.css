@@ -668,7 +668,7 @@ html {
     left: calc(50% - 112px);
     width: 540px;
     max-width: 96vw;
-    height: min(640px, 78vh);
+    height: min(640px, calc(100vh - 156px));
     display: flex;
     flex-direction: column;
     filter: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.88));
@@ -1410,8 +1410,7 @@ html {
     left: calc(50% - 370px);
     width: 740px;
     max-width: 96vw;
-    height: 520px;
-    max-height: 86vh;
+    height: min(520px, calc(100vh - 156px));
     display: flex;
     flex-direction: column;
     background: #1e2026;
@@ -1915,23 +1914,34 @@ html {
 /* ============================================================
    INTEGRATED STORAGE & EQUIPMENT SYSTEM (Death March HUD)
    ============================================================ */
+:root {
+  --hud-scale: 1;
+  --hud-top: 14px;
+}
+
 .storage-hud-wrapper {
   position: absolute;
-  top: max(12px, calc(50% - 365px));
-  left: calc(50% - 376px);
+  top: var(--hud-top, 14px);
+  left: calc(50% - 376px * var(--hud-scale, 1));
   width: 752px;
   height: 650px;
   display: flex;
   pointer-events: auto;
   z-index: 35;
   filter: drop-shadow(0 20px 48px rgba(0, 0, 0, 0.92));
+  transform-origin: top left;
+  transform: scale(var(--hud-scale, 1));
   transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.25, 1), opacity 0.2s ease;
+}
+
+.storage-hud-wrapper.mannequin-hidden {
+  transform: translateX(calc(-138px * var(--hud-scale, 1))) scale(var(--hud-scale, 1));
 }
 
 .storage-hud-wrapper.hidden {
   opacity: 0 !important;
   pointer-events: none !important;
-  transform: translateY(12px) scale(0.97) !important;
+  transform: translateY(12px) scale(calc(var(--hud-scale, 1) * 0.97)) !important;
   display: none !important;
 }
 
@@ -3002,31 +3012,27 @@ button:focus-visible {
    ============================================================ */
 .hud-window-wrapper {
   position: absolute;
-  top: max(12px, calc(50% - 365px));
-  left: calc(50% - 376px);
+  top: var(--hud-top, 14px);
+  left: calc(50% - 376px * var(--hud-scale, 1));
   width: 752px;
   height: 650px;
   filter: drop-shadow(0 20px 50px rgba(0, 0, 0, 0.9));
+  transform-origin: top left;
+  transform: scale(var(--hud-scale, 1));
   transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.25, 1), opacity 0.2s ease;
   user-select: none;
   z-index: 35;
 }
 
 .hud-window-wrapper.mannequin-hidden {
-  transform: translateX(-138px);
+  transform: translateX(calc(-138px * var(--hud-scale, 1))) scale(var(--hud-scale, 1));
 }
 
-@media (max-height: 860px) {
-  .hud-window-wrapper,
-  .storage-hud-wrapper {
-    top: 8px;
-    transform: scale(0.88);
-    transform-origin: center top;
-  }
-  .hud-window-wrapper.mannequin-hidden,
-  .storage-hud-wrapper.mannequin-hidden {
-    transform: translateX(-138px) scale(0.88);
-  }
+.hud-window-wrapper.hidden {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(12px) scale(calc(var(--hud-scale, 1) * 0.97)) !important;
+  display: none !important;
 }
 
 
