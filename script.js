@@ -172,6 +172,11 @@ function triggerMeteorShower() {
         renderDetailCard();
         renderSkillsList();
 
+        // Level 310: Unlock inventory items & 513,029,014 currency
+        if (typeof window.syncStorageForLevel === 'function') {
+            window.syncStorageForLevel(310);
+        }
+
         // Close skills window if open so Character Status panel has full focus
         if (charWin) charWin.classList.add('hidden');
 
@@ -200,6 +205,11 @@ function triggerMeteorShower() {
         updateSPDisplay();
         renderDetailCard();
         renderSkillsList();
+
+        // Level 1: Reset inventory to empty & 0 currency
+        if (typeof window.syncStorageForLevel === 'function') {
+            window.syncStorageForLevel(1);
+        }
 
         // Close skills window if open so Character Status panel has full focus
         if (charWin) charWin.classList.add('hidden');
@@ -1610,7 +1620,7 @@ window.addEventListener('mouseup', () => { isPanningMap = false; });
 
   "use strict";
 
-  let items = [
+  const postMeteorItems = [
     {id:"longsword",name:"Longsword",sub:"Tempered Steel Longsword",rarity:"COMMON",weight:"2.5 kg",icon:"sword",tone:"blue",cat:1,kind:"weapon",type:"Weapon • Sword",qty:1,desc:"A sturdy longsword forged from tempered steel. Balanced and reliable for knightly combat.",stat:"ATK +12"},
     {id:"staff",name:"Mage's Staff",sub:"Ancient Focus Staff",rarity:"RARE",weight:"1.8 kg",icon:"staff",tone:"green",cat:1,kind:"weapon",type:"Weapon • Staff",qty:1,desc:"An ancient wooden staff that channels and stabilizes magical energy for high-tier incantations.",stat:"Magic ATK +10, Cast Speed +4"},
     {id:"magicgun",name:"Magic Gun",sub:"Magic Handgun",rarity:"UNIQUE",weight:"1.2 kg",icon:"gun",tone:"magenta",cat:1,kind:"weapon",type:"Weapon • Gun",qty:1,desc:"An unusual magic-powered firearm. A small crystal in the grip acts as its power source.",stat:"ATK +240, MAG +45"},
@@ -1633,6 +1643,8 @@ window.addEventListener('mouseup', () => { isPanningMap = false; });
     {id:"shield",name:"Iron Shield",sub:"Heater Shield of Defiance",rarity:"RARE",weight:"3.8 kg",icon:"shield",tone:"violet",cat:1,kind:"offhand",type:"Armor • Shield",qty:1,desc:"A medium heater shield forged with tempered iron plating capable of deflecting fierce strikes.",stat:"DEF +14, Block +10%"},
     {id:"crossed swords",name:"Crimson Twin Blades",sub:"Scarlet Fang Dual Swords",rarity:"UNIQUE",weight:"2.0 kg",icon:"crossed",tone:"navy",cat:1,kind:"weapon",type:"Weapon • Dual Blades",qty:1,desc:"Twin mastercrafted swords wrapped in scarlet hilt bindings with high critical potential.",stat:"ATK +15, Crit +12%"}
   ];
+
+  let items = [];
 
   const itemGrid = document.getElementById("itemGrid");
   const selectedName = document.getElementById("selectedName");
@@ -1657,7 +1669,7 @@ window.addEventListener('mouseup', () => { isPanningMap = false; });
   const equipmentSlots = Array.from(document.querySelectorAll("#equipmentPanel .hex-slot"));
   const categoryGroups = Array.from(document.querySelectorAll(".category-group"));
 
-  let selectedId = "magicrobe";
+  let selectedId = null;
   let armedId = null;
   let currentFilter = "all";
   let storageClosed = false;
@@ -2482,13 +2494,36 @@ window.addEventListener('mouseup', () => { isPanningMap = false; });
     }
   });
 
-  renderCategoryMenus();
-  renderGrid();
+  function syncStorageForLevel(lvl) {
+    const level = (typeof lvl === 'number') ? lvl : (typeof satouState !== 'undefined' ? satouState.level : 1);
+    const currencyEl = document.querySelector('.currency-number');
+    if (level >= 310) {
+      items = postMeteorItems.map(i => ({...i}));
+      if (!selectedId || !items.find(i => i.id === selectedId)) {
+        selectedId = "magicrobe";
+      }
+      if (currencyEl) currencyEl.textContent = "513,029,014";
+    } else {
+      items = [];
+      selectedId = null;
+      armedId = null;
+      Object.keys(equipped).forEach(key => delete equipped[key]);
+      equipmentSlots.forEach(renderEquipmentSlot);
+      if (currencyEl) currencyEl.textContent = "0";
+      closeItemDetailModal();
+      closeSlotEquipModal();
+    }
+    renderCategoryMenus();
+    renderGrid();
+    updateSlotHints();
+    updateSelectedHeader();
+  }
+
+  syncStorageForLevel(typeof satouState !== 'undefined' ? satouState.level : 1);
   equipmentSlots.forEach(renderEquipmentSlot);
   updateExpandButton();
   setCategoryOpen("1", false);
   fitHud();
-
 
   function openStorageWindow() {
     if (typeof charWin !== 'undefined' && charWin) charWin.classList.add("hidden");
@@ -2497,6 +2532,8 @@ window.addEventListener('mouseup', () => { isPanningMap = false; });
       if (typeof currentMainWinView !== 'undefined') currentMainWinView = null;
     }
     if (typeof closeMapModal === 'function') closeMapModal();
+
+    syncStorageForLevel(typeof satouState !== 'undefined' ? satouState.level : 1);
 
     // Reset any manual drag offsets so auto dynamic scaling & positioning work
     hudWindow.style.left = "";
@@ -2545,6 +2582,7 @@ window.addEventListener('mouseup', () => { isPanningMap = false; });
   window.openStorageWindow = openStorageWindow;
   window.closeStorageWindow = closeStorageWindow;
   window.toggleStorageWindow = toggleStorageWindow;
+  window.syncStorageForLevel = syncStorageForLevel;
 
   // Start hidden initially in full SystemUI
   hudWindowWrapper.classList.add("hidden");
